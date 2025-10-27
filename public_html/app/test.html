@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Module Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #10b981; }
+        .error { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>Module Loading Test</h1>
+    <div id="results"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/modules/supabase-config.js"></script>
+    <script src="assets/js/config/settings.js"></script>
+    <script src="assets/js/modules/storage.js"></script>
+    <script src="assets/js/modules/auth-module.js"></script>
+    <script src="assets/js/modules/strava-config.js"></script>
+    <script src="assets/js/config/workouts-db.js"></script>
+    <script src="assets/js/modules/workout.js"></script>
+    <script src="assets/js/modules/schedule.js"></script>
+    <script src="assets/js/modules/progress.js"></script>
+    <script src="assets/js/modules/ui.js"></script>
+
+    <script>
+        setTimeout(() => {
+            const results = document.getElementById('results');
+
+            const tests = [
+                { name: 'Supabase', check: () => typeof supabase !== 'undefined' },
+                { name: 'SupabaseConfig', check: () => typeof SupabaseConfig !== 'undefined' },
+                { name: 'APP_CONFIG', check: () => typeof APP_CONFIG !== 'undefined' },
+                { name: 'WORKOUTS_DB', check: () => typeof WORKOUTS_DB !== 'undefined' },
+                { name: 'StorageModule', check: () => typeof StorageModule !== 'undefined' },
+                { name: 'AuthModule', check: () => typeof AuthModule !== 'undefined' },
+                { name: 'WorkoutModule', check: () => typeof WorkoutModule !== 'undefined' },
+                { name: 'ScheduleModule', check: () => typeof ScheduleModule !== 'undefined' },
+                { name: 'ProgressModule', check: () => typeof ProgressModule !== 'undefined' },
+                { name: 'UIModule', check: () => typeof UIModule !== 'undefined' },
+            ];
+
+            tests.forEach(test => {
+                const div = document.createElement('div');
+                div.className = 'test-result';
+                try {
+                    const passed = test.check();
+                    div.className += passed ? ' success' : ' error';
+                    div.textContent = `${test.name}: ${passed ? '✅ LOADED' : '❌ NOT FOUND'}`;
+                } catch (e) {
+                    div.className += ' error';
+                    div.textContent = `${test.name}: ❌ ERROR - ${e.message}`;
+                }
+                results.appendChild(div);
+            });
+
+            // Show console messages
+            console.log('=== MODULE LOADING TEST ===');
+            console.log('APP_CONFIG:', typeof APP_CONFIG !== 'undefined' ? APP_CONFIG : 'NOT DEFINED');
+            console.log('WORKOUTS_DB:', typeof WORKOUTS_DB !== 'undefined' ? 'LOADED' : 'NOT DEFINED');
+        }, 2000);
+    </script>
+</body>
+</html>

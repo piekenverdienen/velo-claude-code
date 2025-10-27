@@ -188,13 +188,13 @@ const WorkoutModule = (function () {
                         <p class="workout-description">${workout.description}</p>
                         
                         <div class="workout-actions">
-                            <button class="btn btn-secondary" onclick="App.resetRPE(${dayIndex}, ${week})">Change RPE</button>
+                            <button class="btn btn-secondary" onclick="App.resetRPE('${dayIndex}', ${week})">Change RPE</button>
                             ${APP_CONFIG.features.enableWorkoutSwap ?
-                                `<button class="btn btn-secondary" onclick="App.swapWorkout(${dayIndex}, ${week})">
+                                `<button class="btn btn-secondary" onclick="App.swapWorkout('${dayIndex}', ${week})">
                                     ${APP_CONFIG.labels.swapWorkout}
                                 </button>` : ''
                             }
-                            <button class="btn btn-secondary" onclick="App.downloadZwiftWorkout(${dayIndex}, ${week})">
+                            <button class="btn btn-secondary" onclick="App.downloadZwiftWorkout('${dayIndex}', ${week})">
                                 🔥 Export .ZWO
                             </button>
                         </div>
@@ -252,14 +252,14 @@ const WorkoutModule = (function () {
                                       style="width: 100%; min-height: 80px; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); resize: vertical;">
                             </textarea>
                         </div>
-                        
+
                         <div class="workout-actions">
                             ${APP_CONFIG.features.enableWorkoutSwap ?
-                                `<button class="btn btn-secondary" onclick="App.swapWorkout(${dayIndex}, ${week})">
+                                `<button class="btn btn-secondary" onclick="App.swapWorkout('${dayIndex}', ${week})">
                                     ${APP_CONFIG.labels.swapWorkout}
                                 </button>` : ''
                             }
-                            <button class="btn btn-secondary" onclick="App.downloadZwiftWorkout(${dayIndex}, ${week})">
+                            <button class="btn btn-secondary" onclick="App.downloadZwiftWorkout('${dayIndex}', ${week})">
                                 🔥 Export .ZWO
                             </button>
                         </div>
@@ -306,16 +306,16 @@ const WorkoutModule = (function () {
                     </div>` : ''}
                     
                     <div class="workout-actions">
-                        <button class="btn btn-primary" onclick="App.completeWorkout(${dayIndex}, ${week})">
+                        <button class="btn btn-primary" onclick="App.completeWorkout('${dayIndex}', ${week})">
                             ${APP_CONFIG.labels.markComplete}
                         </button>
                         ${APP_CONFIG.features.enableWorkoutSwap && intensity !== 'rest' ?
-                            `<button class="btn btn-secondary" onclick="App.swapWorkout(${dayIndex}, ${week})">
+                            `<button class="btn btn-secondary" onclick="App.swapWorkout('${dayIndex}', ${week})">
                                 ${APP_CONFIG.labels.swapWorkout}
                             </button>` : ''
                         }
                         ${workout.intensity !== 'rest' ?
-                            `<button class="btn btn-secondary" onclick="App.downloadZwiftWorkout(${dayIndex}, ${week})">
+                            `<button class="btn btn-secondary" onclick="App.downloadZwiftWorkout('${dayIndex}', ${week})">
                                 🔥 Export .ZWO
                             </button>` : ''
                         }
