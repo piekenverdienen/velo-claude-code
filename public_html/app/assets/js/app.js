@@ -1,7 +1,15 @@
 // Global RPE submit function
 window.submitRPE = function (day, week, rpe) {
     const notes = document.getElementById('rpeNotes')?.value || '';
-    const workoutKey = `${week}-${day}`;
+
+    // Convert day to dayIndex if it's a day name
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    let dayIndex = day;
+    if (typeof day === 'string' && days.includes(day)) {
+        dayIndex = days.indexOf(day);
+    }
+
+    const workoutKey = `${week}-${dayIndex}`;
 
     // Get current state
     let appState = StorageModule.loadState();
@@ -335,13 +343,13 @@ const App = (function () {
             </div>
         `;
 
-        // For history tracking, we use calendar day + week
-        const historyKey = `${actualWeek}-${calendarDay}`;
+        // For history tracking, we use trainingDayIndex + week for consistency
+        const historyKey = `${actualWeek}-${trainingDayIndex}`;
         const isCompleted = appState.history[historyKey] || false;
 
         todayWorkoutDiv.innerHTML = dateHeader + WorkoutModule.generateWorkoutCard(
             todayWorkout,
-            calendarDay,
+            trainingDayIndex,
             actualWeek,
             isCompleted,
             appState
@@ -452,8 +460,8 @@ const App = (function () {
             const trainingDay = trainingDays[trainingDayIndex];
             const workout = weekSchedule[trainingDay];
 
-            // History uses calendar day for proper tracking
-            const historyKey = actualDate ? `${appState.currentWeek}-${calendarDay}` : `${appState.currentWeek}-${trainingDay}`;
+            // History uses trainingDayIndex for consistent tracking
+            const historyKey = `${appState.currentWeek}-${trainingDayIndex}`;
             const isCompleted = appState.history[historyKey] || false;
 
             if (!workout) {
@@ -710,7 +718,17 @@ const App = (function () {
 
         // Workout methods
         completeWorkout: function (day, week) {
-            const key = `${week || appState.currentWeek}-${day}`;
+            // Convert day to dayIndex if it's a day name (Mon, Tue, etc.)
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayIndex = day;
+
+            // If day is a string (day name), convert to index
+            if (typeof day === 'string' && days.includes(day)) {
+                dayIndex = days.indexOf(day);
+            }
+
+            // Use consistent key format: week-dayIndex (number)
+            const key = `${week || appState.currentWeek}-${dayIndex}`;
             appState.history[key] = true;
             StorageModule.saveState(appState);
 
@@ -742,8 +760,16 @@ const App = (function () {
         viewWorkoutDetails: function (day) {
             UIModule.switchTab('today');
 
+            // Convert day to dayIndex if it's a day name
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayIndex = day;
+            if (typeof day === 'string' && days.includes(day)) {
+                dayIndex = days.indexOf(day);
+            }
+
             const workout = appState.schedule?.[appState.currentWeek]?.[day];
-            const isCompleted = appState.history[`${appState.currentWeek}-${day}`] || false;
+            const historyKey = `${appState.currentWeek}-${dayIndex}`;
+            const isCompleted = appState.history[historyKey] || false;
 
             const todayWorkoutDiv = document.getElementById('todayWorkout');
             if (!todayWorkoutDiv) return;
@@ -773,7 +799,7 @@ const App = (function () {
                         </button>
                     </p>
                 </div>
-                ${WorkoutModule.generateWorkoutCard(workout, day, appState.currentWeek, isCompleted, appState)}
+                ${WorkoutModule.generateWorkoutCard(workout, dayIndex, appState.currentWeek, isCompleted, appState)}
             `;
         },
 
@@ -803,7 +829,14 @@ const App = (function () {
         },
 
         resetRPE: function (day, week) {
-            const workoutKey = `${week}-${day}`;
+            // Convert day to dayIndex if it's a day name
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayIndex = day;
+            if (typeof day === 'string' && days.includes(day)) {
+                dayIndex = days.indexOf(day);
+            }
+
+            const workoutKey = `${week}-${dayIndex}`;
 
             if (appState.rpeHistory) {
                 const index = appState.rpeHistory.findIndex(r => r.workoutKey === workoutKey);
