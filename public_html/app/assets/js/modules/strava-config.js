@@ -431,7 +431,10 @@ const StravaConfig = {
         };
 
         // 2️⃣ POWER ZONE ACCURACY (40%) - If power data available
-        if (activity.has_power && ftp) {
+        // Check both has_power (outdoor) and device_watts (Zwift/virtual)
+        const hasPowerData = activity.has_power || activity.device_watts || activity.average_watts;
+
+        if (hasPowerData && ftp) {
             const streams = await this.getActivityStreams(activity.id);
 
             if (streams && streams.watts && streams.watts.data) {
@@ -651,7 +654,10 @@ const StravaConfig = {
 
                 if (match) {
                     // Calculate quality score if power data available
-                    if (activity.has_power && appState.ftp) {
+                    // Check both has_power (outdoor rides) and device_watts (Zwift/virtual)
+                    const hasPowerData = activity.has_power || activity.device_watts || activity.average_watts;
+
+                    if (hasPowerData && appState.ftp) {
                         try {
                             const qualityScore = await this.analyzeWorkoutQuality(
                                 match.activity,
