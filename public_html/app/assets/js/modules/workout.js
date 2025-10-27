@@ -44,7 +44,12 @@ const WorkoutModule = (function () {
         }
     };
 
-    // Calculate watts from power zone
+    /**
+     * Calculate wattage range from power zone and FTP
+     * @param {string} powerZone - Power zone ('Z1'-'Z6')
+     * @param {number} ftp - Functional Threshold Power in watts
+     * @returns {string} Wattage range (e.g., '150-200W') or empty string if invalid
+     */
     function calculateWatts(powerZone, ftp) {
         if (!powerZone || !ftp) return '';
 
@@ -66,7 +71,11 @@ const WorkoutModule = (function () {
         return `${minWatts}-${maxWatts}W`;
     }
 
-    // Get RPE target based on intensity
+    /**
+     * Get RPE (Rate of Perceived Exertion) target for workout intensity
+     * @param {string} intensity - Workout intensity ('easy', 'moderate', 'hard', 'rest')
+     * @returns {Object} RPE target with min, max, and description
+     */
     function getRPETarget(intensity) {
         const targets = {
             'easy': { min: 2, max: 4, description: 'Conversational pace' },
@@ -124,7 +133,15 @@ const WorkoutModule = (function () {
             `;
         },
 
-        // UPDATED: generateWorkoutCard now uses dayIndex instead of day string
+        /**
+         * Generate HTML workout card with actions and details
+         * @param {Object} workout - Workout object with title, description, duration, intensity
+         * @param {number} dayIndex - Day index (0-6) where 0 is the program start day
+         * @param {number} week - Week number (1-6)
+         * @param {boolean} isCompleted - Whether workout is marked as completed
+         * @param {Object} appState - Application state with FTP, RPE history, quality scores
+         * @returns {string} HTML string for workout card
+         */
         generateWorkoutCard: function (workout, dayIndex, week, isCompleted, appState) {
             // dayIndex is ALWAYS a number 0-6
             if (!workout || workout.intensity === 'rest') {
@@ -337,6 +354,12 @@ const WorkoutModule = (function () {
             `;
         },
 
+        /**
+         * Find alternative workout with same intensity from workout database
+         * @param {Object} currentWorkout - Current workout object with intensity
+         * @param {string} goal - Training goal to search in ('endurance', 'power', etc.)
+         * @returns {Object|null} Random alternative workout or null if none found
+         */
         findAlternativeWorkout: function (currentWorkout, goal) {
             const workoutList = WORKOUTS_DB[goal]?.[currentWorkout.intensity];
             if (!workoutList) return null;
