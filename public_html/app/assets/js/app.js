@@ -490,9 +490,9 @@ const App = (function () {
                         </div>
                         <p class="workout-description">${intensityConfig.description}</p>
                         <div class="workout-actions">
-                            ${!isCompleted ? `<button class="btn btn-primary" onclick="App.completeWorkout('${calendarDay}', ${appState.currentWeek})">${APP_CONFIG.labels.markComplete}</button>` : ''}
-                            <button class="btn btn-secondary" onclick="App.viewWorkoutDetails('${calendarDay}')">${APP_CONFIG.labels.viewDetails}</button>
-                            ${APP_CONFIG.features.enableWorkoutSwap ? `<button class="btn btn-secondary" onclick="App.swapWorkout('${calendarDay}', ${appState.currentWeek})">${APP_CONFIG.labels.swapWorkout}</button>` : ''}
+                            ${!isCompleted ? `<button class="btn btn-primary" onclick="App.completeWorkout('${trainingDay}', ${appState.currentWeek})">${APP_CONFIG.labels.markComplete}</button>` : ''}
+                            <button class="btn btn-secondary" onclick="App.viewWorkoutDetails('${trainingDay}')">${APP_CONFIG.labels.viewDetails}</button>
+                            ${APP_CONFIG.features.enableWorkoutSwap ? `<button class="btn btn-secondary" onclick="App.swapWorkout('${trainingDay}', ${appState.currentWeek})">${APP_CONFIG.labels.swapWorkout}</button>` : ''}
                         </div>
                     </div>
                 `;
