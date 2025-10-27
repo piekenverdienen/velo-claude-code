@@ -236,10 +236,10 @@ const WorkoutModule = (function () {
                                     let emoji = n <= 2 ? '😴' : n <= 4 ? '😊' : n <= 6 ? '😐' : n <= 8 ? '😤' : '💀';
                                     let color = n <= 4 ? '#10b981' : n <= 6 ? '#f59e0b' : n <= 8 ? '#f97316' : '#ef4444';
                                     return `
-                                        <button onclick="submitRPE(${dayIndex}, ${week}, ${n})" 
-                                                class="btn" 
+                                        <button onclick="submitRPE('${dayIndex}', ${week}, ${n})"
+                                                class="btn"
                                                 style="background: ${color}; color: white; padding: 12px; font-size: 1.1rem; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s;"
-                                                onmouseover="this.style.transform='scale(1.1)'" 
+                                                onmouseover="this.style.transform='scale(1.1)'"
                                                 onmouseout="this.style.transform='scale(1)'">
                                             ${n}<br><span style="font-size: 1.5rem;">${emoji}</span>
                                         </button>
