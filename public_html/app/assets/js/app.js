@@ -742,11 +742,20 @@ const App = (function () {
         },
 
         swapWorkout: function (day, week) {
-            const currentWorkout = appState.schedule[week || appState.currentWeek][day];
+            // Convert dayIndex to day name if needed
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayName = day;
+
+            // If day is a number (dayIndex), convert to day name
+            if (typeof day === 'number' || (!isNaN(day) && !days.includes(day))) {
+                dayName = days[parseInt(day)];
+            }
+
+            const currentWorkout = appState.schedule[week || appState.currentWeek][dayName];
             const alternative = WorkoutModule.findAlternativeWorkout(currentWorkout, appState.goal);
 
             if (alternative) {
-                appState.schedule[week || appState.currentWeek][day] = {
+                appState.schedule[week || appState.currentWeek][dayName] = {
                     ...alternative,
                     duration: alternative.duration[appState.timeCommitment]
                 };
@@ -806,7 +815,16 @@ const App = (function () {
         },
 
         downloadZwiftWorkout: function (day, week) {
-            const workout = appState.schedule[week || appState.currentWeek][day];
+            // Convert dayIndex to day name if needed
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayName = day;
+
+            // If day is a number (dayIndex), convert to day name
+            if (typeof day === 'number' || (!isNaN(day) && !days.includes(day))) {
+                dayName = days[parseInt(day)];
+            }
+
+            const workout = appState.schedule[week || appState.currentWeek][dayName];
 
             if (!workout) {
                 UIModule.showNotification('No workout found for this day');
@@ -821,7 +839,7 @@ const App = (function () {
             const success = ZwiftExport.downloadWorkout(
                 workout,
                 appState.ftp,
-                day,
+                dayName,
                 week || appState.currentWeek
             );
 
