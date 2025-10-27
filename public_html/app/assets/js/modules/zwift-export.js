@@ -42,21 +42,44 @@ const ZwiftExport = (function () {
         return 'default';
     }
 
-    // Parse interval structure from workout details
+    /**
+     * Parse interval structure from workout details
+     * Supports: minutes, seconds, various time formats
+     * @param {Object} workout - Workout object with details
+     * @returns {Object} Parsed interval structure with type, repeat, durations
+     */
     function parseIntervalStructure(workout) {
         const details = workout.details || '';
         const type = detectWorkoutType(workout);
 
-        // Match patterns like "5x3 min", "2x20min", "4x4 min", "3x10 min"
-        const intervalMatch = details.match(/(\d+)x(\d+)\s*min/i);
+        // Helper: Convert time to seconds
+        const parseTimeToSeconds = (value, unit) => {
+            const num = parseFloat(value);
+            if (unit.match(/^s(ec)?(ond)?s?$/i)) {
+                return num; // Already seconds
+            }
+            return num * 60; // Convert minutes to seconds
+        };
+
+        // Match patterns: "10x30 seconds", "5x3 min", "4x4min at 90%", "3x8 min"
+        const intervalMatch = details.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)/i);
 
         if (intervalMatch) {
             const repeat = parseInt(intervalMatch[1]);
-            const duration = parseInt(intervalMatch[2]) * 60; // Convert to seconds
+            const workValue = intervalMatch[2];
+            const workUnit = intervalMatch[3];
+            const duration = parseTimeToSeconds(workValue, workUnit);
 
-            // Match recovery time like "3 min recovery", "5 min recovery", "4min easy"
-            const recoveryMatch = details.match(/(\d+)\s*min\s+(?:recovery|easy)/i);
-            const recoveryDuration = recoveryMatch ? parseInt(recoveryMatch[1]) * 60 : Math.max(180, duration * 0.5);
+            // Match recovery: "3 min recovery", "30s rest", "4min easy", "2 minute recovery"
+            const recoveryMatch = details.match(/(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:recovery|easy|rest)/i);
+
+            let recoveryDuration;
+            if (recoveryMatch) {
+                recoveryDuration = parseTimeToSeconds(recoveryMatch[1], recoveryMatch[2]);
+            } else {
+                // Default: 50% of work duration or min 3 min (whichever is less for short intervals)
+                recoveryDuration = Math.min(180, Math.max(30, duration * 0.5));
+            }
 
             return {
                 type: 'intervals',

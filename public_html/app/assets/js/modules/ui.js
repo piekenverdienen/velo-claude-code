@@ -1020,16 +1020,35 @@ const UIModule = (function () {
             `;
         },
 
+        /**
+         * Parse workout details into visualization phases
+         * Supports: minutes, seconds, various interval patterns, warmup/cooldown
+         * @param {Object} workout - Workout object with details and duration
+         * @returns {Array<Object>} Array of workout phases with duration, intensity, type
+         */
         parseWorkoutPhasesAdvanced: function (workout) {
             const phases = [];
             const details = workout.details || '';
             const intensity = workout.intensity || 'easy';
 
+            // HELPER: Convert time strings to minutes
+            const parseTime = (value, unit) => {
+                const num = parseFloat(value);
+                if (unit.match(/^s(ec)?(ond)?s?$/i)) {
+                    return num / 60; // Convert seconds to minutes
+                }
+                return num; // Already minutes
+            };
+
             // PARSE VERSCHILLENDE INTERVAL PATTERNS
-            const intervalMatch = details.match(/(\d+)x(\d+)\s*min\s*(?:@|at)\s*(?:(\d+)(?:-(\d+))?%?\s*)?(?:FTP)?/i);
-            const warmupMatch = details.match(/Warm-up:\s*(\d+)\s*min/i);
-            const cooldownMatch = details.match(/Cool-down:\s*(\d+)\s*min/i);
-            const recoveryMatch = details.match(/(\d+)\s*min\s*(?:easy|recovery)/i);
+            // Match: "10x30 seconds", "5x3 min", "4x4min at 90%", "3x8 min @ 80-85% FTP"
+            const intervalMatch = details.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:@|at)?\s*(?:(\d+)(?:-(\d+))?%?\s*)?(?:FTP|all-out)?/i);
+
+            const warmupMatch = details.match(/Warm-up:\s*(\d+)\s*(min|minutes)/i);
+            const cooldownMatch = details.match(/Cool-down:\s*(\d+)\s*(min|minutes)/i);
+
+            // Match: "3 min recovery", "4min easy", "30s rest", "2 minute recovery"
+            const recoveryMatch = details.match(/(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:easy|recovery|rest)/i);
 
             // 1. WARMUP FASE
             let warmupDuration = 0;
@@ -1043,29 +1062,54 @@ const UIModule = (function () {
                 });
             }
 
-            // 2. MAIN SET - Check of er intervals zijn
+            // 2. COOLDOWN FASE (parse now for duration calculation)
+            let cooldownDuration = 0;
+            if (cooldownMatch) {
+                cooldownDuration = parseInt(cooldownMatch[1]);
+            }
+
+            // 3. MAIN SET - Check of er intervals zijn
             if (intervalMatch && intervalMatch[1] && intervalMatch[2]) {
                 const reps = parseInt(intervalMatch[1]);
-                const duration = parseInt(intervalMatch[2]);
+                const workDurationRaw = intervalMatch[2];
+                const workUnit = intervalMatch[3];
+                const workDuration = parseTime(workDurationRaw, workUnit);
 
                 // Bepaal intensiteit van de intervals
                 let avgIntensity;
-                if (intervalMatch[3]) {
-                    const intensityLow = parseInt(intervalMatch[3]) / 100;
-                    const intensityHigh = intervalMatch[4] ? parseInt(intervalMatch[4]) / 100 : intensityLow;
+                if (intervalMatch[4]) {
+                    const intensityLow = parseInt(intervalMatch[4]) / 100;
+                    const intensityHigh = intervalMatch[5] ? parseInt(intervalMatch[5]) / 100 : intensityLow;
                     avgIntensity = (intensityLow + intensityHigh) / 2;
+                } else if (details.toLowerCase().includes('all-out') || details.toLowerCase().includes('sprint')) {
+                    avgIntensity = 1.5; // Anaerobic/sprint zone
                 } else {
                     avgIntensity = this.getIntensityValue(workout);
                 }
 
                 // Recovery tijd
-                const recoveryTime = recoveryMatch ? parseInt(recoveryMatch[1]) : 3;
+                let recoveryTime = 3; // Default 3 min
+                if (recoveryMatch) {
+                    recoveryTime = parseTime(recoveryMatch[1], recoveryMatch[2]);
+                }
+
+                // Calculate total time needed for intervals
+                const intervalTotalTime = reps * workDuration + (reps - 1) * recoveryTime;
+                const availableTime = (workout.duration || 60) - warmupDuration - cooldownDuration;
+
+                // If intervals would exceed available time, adjust recovery
+                let adjustedRecoveryTime = recoveryTime;
+                if (intervalTotalTime > availableTime && reps > 1) {
+                    const totalWorkTime = reps * workDuration;
+                    const totalRecoveryTime = availableTime - totalWorkTime;
+                    adjustedRecoveryTime = Math.max(0.5, totalRecoveryTime / (reps - 1)); // Min 30s recovery
+                }
 
                 // Bouw alle intervals
                 for (let i = 0; i < reps; i++) {
                     phases.push({
                         name: `Interval ${i + 1}`,
-                        duration: duration,
+                        duration: workDuration,
                         intensity: avgIntensity,
                         type: 'work'
                     });
@@ -1073,7 +1117,7 @@ const UIModule = (function () {
                     if (i < reps - 1) {
                         phases.push({
                             name: 'Recovery',
-                            duration: recoveryTime,
+                            duration: adjustedRecoveryTime,
                             intensity: 0.55,
                             type: 'recovery'
                         });
@@ -1082,7 +1126,6 @@ const UIModule = (function () {
 
             } else {
                 // GEEN INTERVALS - Steady State workout
-                const cooldownDuration = cooldownMatch ? parseInt(cooldownMatch[1]) : 0;
                 const mainDuration = Math.max(
                     (workout.duration || 60) - warmupDuration - cooldownDuration,
                     20
@@ -1120,9 +1163,8 @@ const UIModule = (function () {
                 }
             }
 
-            // 3. COOLDOWN FASE
+            // 4. COOLDOWN FASE
             if (cooldownMatch) {
-                const cooldownDuration = parseInt(cooldownMatch[1]);
                 phases.push({
                     name: 'Cool-down',
                     duration: cooldownDuration,
