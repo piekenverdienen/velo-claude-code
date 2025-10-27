@@ -20,7 +20,11 @@ const StravaConfig = {
         zone6: { min: 1.21, max: 2.50, name: 'Anaerobic' }
     },
 
-    // Helper function to calculate days since program start
+    /**
+     * Calculate days since program start
+     * @param {Date|string} [date] - Date to check, defaults to today
+     * @returns {number|null} Number of days since program start, or null if no start date
+     */
     getDaysSinceStart(date) {
         const appState = StorageModule.loadState();
         if (!appState.programStartDate) return null;
@@ -34,7 +38,10 @@ const StravaConfig = {
         return Math.floor((checkDate - startDate) / (1000 * 60 * 60 * 24));
     },
 
-    // Initialize Strava connection
+    /**
+     * Initialize Strava connection and trigger auto-sync
+     * @returns {Promise<boolean>} True if connection exists, false otherwise
+     */
     async init() {
         console.log('🔧 Initializing Strava integration...');
 
@@ -58,7 +65,11 @@ const StravaConfig = {
         return false;
     },
 
-    // Auto-sync function (runs on init and can be called manually)
+    /**
+     * Auto-sync recent Strava activities with scheduled workouts
+     * Runs on init and can be called manually. Only auto-applies high confidence matches (>60%)
+     * @returns {Promise<void>}
+     */
     async autoSync() {
         const connection = await this.checkConnection();
         if (!connection) return;
@@ -95,7 +106,10 @@ const StravaConfig = {
         }
     },
 
-    // Check if user has active Strava connection
+    /**
+     * Check if user has active Strava connection
+     * @returns {Promise<Object|null>} Connection data with athlete info, or null if not connected
+     */
     async checkConnection() {
         if (!SupabaseConfig.client || !AuthModule.currentUser) {
             return null;
@@ -130,7 +144,10 @@ const StravaConfig = {
         }
     },
 
-    // Start OAuth flow
+    /**
+     * Start Strava OAuth authorization flow
+     * Redirects user to Strava for authorization
+     */
     connect() {
         const params = new URLSearchParams({
             client_id: this.clientId,
@@ -143,7 +160,10 @@ const StravaConfig = {
         window.location.href = `${this.authUrl}?${params.toString()}`;
     },
 
-    // Disconnect Strava
+    /**
+     * Disconnect Strava account from user profile
+     * @returns {Promise<boolean>} True if disconnected successfully
+     */
     async disconnect() {
         if (!confirm('Disconnect your Strava account? Your training data will remain saved.')) {
             return false;
@@ -171,7 +191,11 @@ const StravaConfig = {
         }
     },
 
-    // Refresh access token
+    /**
+     * Refresh expired Strava access token
+     * @param {string} refreshToken - Strava refresh token
+     * @returns {Promise<Object|null>} Updated connection data or null on error
+     */
     async refreshToken(refreshToken) {
         try {
             const response = await fetch('https://www.strava.com/oauth/token', {
@@ -211,7 +235,11 @@ const StravaConfig = {
         }
     },
 
-    // Fetch recent activities
+    /**
+     * Fetch recent activities from Strava API
+     * @param {number} [limit=30] - Maximum number of activities to fetch
+     * @returns {Promise<Array>} Array of Strava activities
+     */
     async getRecentActivities(limit = 30) {
         const connection = await this.checkConnection();
         if (!connection) {
@@ -243,7 +271,11 @@ const StravaConfig = {
         }
     },
 
-    // 🆕 FASE 1: Fetch detailed activity streams for power analysis
+    /**
+     * Fetch detailed activity streams for power/HR analysis
+     * @param {number} activityId - Strava activity ID
+     * @returns {Promise<Object|null>} Activity streams (watts, HR, time, etc.) or null on error
+     */
     async getActivityStreams(activityId) {
         const connection = await this.checkConnection();
         if (!connection) {
@@ -277,7 +309,12 @@ const StravaConfig = {
         }
     },
 
-    // 🆕 FASE 1: Calculate time spent in each power zone
+    /**
+     * Calculate time spent in each power zone
+     * @param {Array<number>} wattsArray - Array of power values in watts
+     * @param {number} ftp - Functional Threshold Power
+     * @returns {Object|null} Time distribution across zones (zone1-zone6) or null if invalid data
+     */
     calculateTimeInZones(wattsArray, ftp) {
         if (!wattsArray || !ftp || wattsArray.length === 0) {
             return null;
@@ -312,7 +349,13 @@ const StravaConfig = {
         return zones;
     },
 
-    // 🆕 FASE 1: Detect intervals in power data
+    /**
+     * Detect high-intensity intervals in power data
+     * @param {Array<number>} wattsArray - Array of power values
+     * @param {number} ftp - Functional Threshold Power
+     * @param {number} [minIntervalSeconds=60] - Minimum duration to count as interval
+     * @returns {Array<Object>} Detected intervals with start, end, duration, avgWatts
+     */
     detectIntervals(wattsArray, ftp, minIntervalSeconds = 60) {
         if (!wattsArray || !ftp || wattsArray.length === 0) {
             return [];
@@ -353,7 +396,12 @@ const StravaConfig = {
         return intervals;
     },
 
-    // 🆕 FASE 1: Score power zone accuracy based on workout type
+    /**
+     * Score power zone accuracy based on workout intensity
+     * @param {Object} timeInZones - Time distribution across zones (% in each zone)
+     * @param {string} workoutIntensity - Workout intensity ('easy', 'moderate', 'hard')
+     * @returns {number} Score from 0-10 based on zone compliance
+     */
     scorePowerZoneAccuracy(timeInZones, workoutIntensity) {
         if (!timeInZones) return 5; // Default middle score
 
@@ -396,7 +444,14 @@ const StravaConfig = {
         return score;
     },
 
-    // 🆕 FASE 1: Advanced workout quality analysis
+    /**
+     * Analyze workout quality using power data and scheduled workout
+     * Calculates 3 component scores: duration (30%), power zones (40%), completion (30%)
+     * @param {Object} activity - Strava activity object
+     * @param {Object} scheduledWorkout - Scheduled workout object with duration and intensity
+     * @param {number} ftp - Functional Threshold Power
+     * @returns {Promise<Object>} Quality score object with total, duration, powerZones, completion, details
+     */
     async analyzeWorkoutQuality(activity, scheduledWorkout, ftp) {
         console.log(`🔬 Analyzing workout quality for: ${activity.name}`);
 
