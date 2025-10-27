@@ -752,12 +752,26 @@ const App = (function () {
             }
 
             const currentWorkout = appState.schedule[week || appState.currentWeek][dayName];
+
+            if (!currentWorkout) {
+                UIModule.showNotification('No workout found for this day');
+                return;
+            }
+
             const alternative = WorkoutModule.findAlternativeWorkout(currentWorkout, appState.goal);
 
             if (alternative) {
+                // Handle duration - could be a number or an object
+                let workoutDuration;
+                if (typeof alternative.duration === 'object' && alternative.duration !== null) {
+                    workoutDuration = alternative.duration[appState.timeCommitment] || alternative.duration.enthusiast || 60;
+                } else {
+                    workoutDuration = alternative.duration || currentWorkout.duration || 60;
+                }
+
                 appState.schedule[week || appState.currentWeek][dayName] = {
                     ...alternative,
-                    duration: alternative.duration[appState.timeCommitment]
+                    duration: workoutDuration
                 };
 
                 StorageModule.saveState(appState);
