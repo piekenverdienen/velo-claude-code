@@ -95,7 +95,12 @@ const ZwiftExport = (function () {
         return mapping[workoutType] || mapping.default;
     }
 
-    // Generate workout segments - GEFIXTE VERSIE MET CORRECTE VOLGORDE
+    /**
+     * Generate workout segments with correct duration calculation
+     * Ensures warmup + main + cooldown = total workout duration
+     * @param {Object} workout - Workout object with duration, intensity, details
+     * @returns {string} XML segments for Zwift workout
+     */
     function generateWorkoutSegments(workout) {
         let segments = '';
         const intensity = workout.intensity || 'easy';
@@ -103,19 +108,38 @@ const ZwiftExport = (function () {
         const structure = parseIntervalStructure(workout);
         const powers = getPowerForWorkout(structure.workoutType, intensity);
 
-        // 1. Warmup
-        const warmupDuration = intensity === 'hard' ? 600 : 300;
-        segments += `        <Warmup Duration="${warmupDuration}" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
-
-        // 2. Main workout
-        const totalDuration = duration * 60;
-        const cooldownDuration = intensity === 'hard' ? 600 : 300;
+        // 1. Calculate durations
+        const totalDuration = duration * 60; // Convert to seconds
+        const warmupDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
+        const cooldownDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
         const mainDuration = totalDuration - warmupDuration - cooldownDuration;
 
-        // FIXED: Check structure type FIRST, then intensity
-        if (structure.type === 'intervals') {
-            // Structured intervals - ALWAYS take priority
-            segments += `        <IntervalsT Repeat="${structure.repeat}" OnDuration="${structure.onDuration}" OffDuration="${structure.offDuration}" OnPower="${powers.on}" OffPower="${powers.off}" pace="0"/>\n`;
+        // 2. Warmup
+        segments += `        <Warmup Duration="${warmupDuration}" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
+
+        // 3. Main workout - FIXED to respect total duration
+        if (structure.type === 'intervals' && mainDuration > 0) {
+            // Calculate how many intervals fit in the available time
+            const singleIntervalDuration = structure.onDuration + structure.offDuration;
+            const totalParsedTime = structure.repeat * singleIntervalDuration;
+
+            // Check if parsed intervals fit in available time
+            if (totalParsedTime <= mainDuration) {
+                // Parsed intervals fit - use them and fill remaining time with easy spinning
+                segments += `        <IntervalsT Repeat="${structure.repeat}" OnDuration="${structure.onDuration}" OffDuration="${structure.offDuration}" OnPower="${powers.on}" OffPower="${powers.off}" pace="0"/>\n`;
+
+                const remainingTime = mainDuration - totalParsedTime;
+                if (remainingTime > 120) { // If more than 2 minutes left, add easy spinning
+                    segments += `        <SteadyState Duration="${remainingTime}" Power="${POWER_ZONES.easy.high}" pace="0"/>\n`;
+                }
+            } else {
+                // Parsed intervals don't fit - adjust to fit available time
+                // Keep the same ON duration, adjust recovery to fit
+                const availableTimePerInterval = Math.floor(mainDuration / structure.repeat);
+                const adjustedOffDuration = Math.max(120, availableTimePerInterval - structure.onDuration); // Min 2 min recovery
+
+                segments += `        <IntervalsT Repeat="${structure.repeat}" OnDuration="${structure.onDuration}" OffDuration="${adjustedOffDuration}" OnPower="${powers.on}" OffPower="${powers.off}" pace="0"/>\n`;
+            }
 
         } else if (structure.type === 'pyramid') {
             // Pyramid workout (5-10-15-10-5 min)

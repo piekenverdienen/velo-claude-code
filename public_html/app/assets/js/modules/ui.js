@@ -1134,8 +1134,14 @@ const UIModule = (function () {
             return phases;
         },
 
+        /**
+         * Get intensity value for workout graph visualization
+         * Parses powerZone, intensity field (as percentage), or falls back to intensity category
+         * @param {Object} workout - Workout object
+         * @returns {number} Intensity as decimal (0.0-1.0)
+         */
         getIntensityValue: function (workout) {
-            // Probeer eerst powerZone als het een percentage is
+            // 1. Try powerZone field if it's a percentage
             if (workout.powerZone && typeof workout.powerZone === 'string') {
                 const match = workout.powerZone.match(/(\d+)(?:-(\d+))?%/);
                 if (match) {
@@ -1145,11 +1151,22 @@ const UIModule = (function () {
                 }
             }
 
-            // Fallback op intensity categorie
+            // 2. Try intensity field if it's a percentage (e.g., "55% FTP", "80-85% FTP")
+            if (workout.intensity && typeof workout.intensity === 'string') {
+                const match = workout.intensity.match(/(\d+)(?:-(\d+))?%/);
+                if (match) {
+                    const low = parseInt(match[1]) / 100;
+                    const high = match[2] ? parseInt(match[2]) / 100 : low;
+                    return (low + high) / 2;
+                }
+            }
+
+            // 3. Fallback to intensity category
             const intensityMap = {
                 'easy': 0.65,
                 'moderate': 0.82,
-                'hard': 0.95
+                'hard': 0.95,
+                'rest': 0.50
             };
 
             return intensityMap[workout.intensity] || 0.70;

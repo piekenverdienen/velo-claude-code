@@ -2,8 +2,29 @@
 const WorkoutModule = (function () {
     'use strict';
 
-    // Intensity configurations
+    /**
+     * Get intensity configuration for badge display
+     * Handles both category strings ('easy', 'moderate', 'hard') and percentage strings ('55% FTP', '80-85% FTP')
+     * @param {string} intensity - Intensity as category or percentage
+     * @returns {Object} Intensity config with icon, label, badgeClass, description
+     */
     function getIntensityConfig(intensity) {
+        // If intensity is a percentage string, map it to a category
+        if (intensity && typeof intensity === 'string' && intensity.includes('%')) {
+            const match = intensity.match(/(\d+)(?:-(\d+))?%/);
+            if (match) {
+                const low = parseInt(match[1]);
+                const high = match[2] ? parseInt(match[2]) : low;
+                const avg = (low + high) / 2;
+
+                // Map percentage to category
+                if (avg < 70) return APP_CONFIG.intensityConfig.easy; // Recovery/Easy zone
+                if (avg < 85) return APP_CONFIG.intensityConfig.moderate; // Tempo/Sweet Spot
+                return APP_CONFIG.intensityConfig.hard; // Threshold/VO2max
+            }
+        }
+
+        // Direct category lookup
         return APP_CONFIG.intensityConfig[intensity] || APP_CONFIG.intensityConfig.easy;
     }
 
