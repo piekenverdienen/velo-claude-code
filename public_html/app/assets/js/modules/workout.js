@@ -139,6 +139,7 @@ const WorkoutModule = (function () {
             // Check if we have RPE for this workout
             const workoutKey = `${week}-${dayIndex}`;
             const hasRPE = appState.rpeHistory?.find(r => r.workoutKey === workoutKey);
+            const qualityScore = appState.workoutScores?.[workoutKey];
             const intensity = workout.intensity || 'easy';
 
             // If completed AND has RPE, show confirmation
@@ -151,7 +152,7 @@ const WorkoutModule = (function () {
                 return `
                     <div class="workout-card">
                         <h3 class="workout-title">${workout.name} ✅</h3>
-                        
+
                         <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
                             <h4>✅ Workout Complete!</h4>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0;">
@@ -171,7 +172,7 @@ const WorkoutModule = (function () {
                                 Recorded: ${new Date(hasRPE.date).toLocaleDateString()} at ${new Date(hasRPE.date).toLocaleTimeString()}
                             </p>
                         </div>
-                        
+
                         <div class="workout-badges">
                             ${this.getIntensityBadge(intensity)}
                             ${workout.duration > 0 ? `
@@ -183,6 +184,10 @@ const WorkoutModule = (function () {
                                 ⚡ ${workout.powerZone} (${calculatedWatts})
                             </span>` : ''}
                             <span class="badge" style="background: #10b981;">RPE: ${hasRPE.rpe}</span>
+                            ${qualityScore ? `
+                            <span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">
+                                ⭐ ${qualityScore.total}/10 quality
+                            </span>` : ''}
                         </div>
                         
                         <p class="workout-description">${workout.description}</p>
@@ -223,8 +228,12 @@ const WorkoutModule = (function () {
                             <span class="badge" style="background: rgba(147, 51, 234, 0.9);">
                                 ⚡ ${workout.powerZone} (${calculatedWatts})
                             </span>` : ''}
+                            ${qualityScore ? `
+                            <span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">
+                                ⭐ ${qualityScore.total}/10 quality
+                            </span>` : ''}
                         </div>
-                        
+
                         <div class="rpe-section" style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 8px; margin: 20px 0;">
                             <h4 style="margin-top: 0;">How hard was this workout?</h4>
                             <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 16px;">
@@ -285,6 +294,10 @@ const WorkoutModule = (function () {
                         <span class="badge" style="background: rgba(147, 51, 234, 0.9);">
                             ⚡ ${workout.powerZone}
                             <span class="power-zone-watts">(${calculatedWatts})</span>
+                        </span>` : ''}
+                        ${qualityScore ? `
+                        <span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">
+                            ⭐ ${qualityScore.total}/10 quality
                         </span>` : ''}
                     </div>
                     <p class="workout-description">${workout.description || 'Get ready for a great workout!'}</p>

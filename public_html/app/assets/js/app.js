@@ -474,6 +474,7 @@ const App = (function () {
             } else {
                 const intensityConfig = APP_CONFIG.intensityConfig[workout.intensity || 'easy'];
                 const rpeData = appState.rpeHistory?.find(r => r.workoutKey === historyKey);
+                const qualityScore = appState.workoutScores?.[historyKey];
                 const duration = workout.duration || 60;
                 const hours = duration >= 60 ? Math.floor(duration / 60) : 0;
                 const mins = duration % 60;
@@ -494,6 +495,7 @@ const App = (function () {
                             ${WorkoutModule.getIntensityBadge(workout.intensity)}
                             ${isCompleted ? '<span class="badge badge-easy">✅ Done</span>' : ''}
                             ${rpeData ? `<span class="badge" style="background: #10b981;">RPE: ${rpeData.rpe}</span>` : ''}
+                            ${qualityScore ? `<span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">⭐ ${qualityScore.total}/10</span>` : ''}
                             ${workout.adapted ? '<span class="badge" style="background: #6366f1;">⚡ Adapted</span>' : ''}
                         </div>
                         <p class="workout-description">${intensityConfig.description}</p>
