@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connecting to Strava...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0A0A0F 0%, #1A1A24 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8B5CF6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #A1A1AA;
+        }
+
+        .error {
+            color: #EF4444;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1 id="status">Connecting to Strava...</h1>
+        <p id="message">Please wait while we complete the connection.</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/modules/supabase-config.js"></script>
+    <script>
+        async function handleCallback() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const error = params.get('error');
+            
+            if (error) {
+                document.getElementById('status').textContent = 'Connection Failed';
+                document.getElementById('message').innerHTML = 
+                    `<span class="error">Authorization denied. You can try again from settings.</span>`;
+                
+                setTimeout(() => {
+                    window.location.href = '/app/';
+                }, 3000);
+                return;
+            }
+            
+            if (!code) {
+                document.getElementById('status').textContent = 'Invalid Request';
+                document.getElementById('message').innerHTML = 
+                    `<span class="error">No authorization code received.</span>`;
+                
+                setTimeout(() => {
+                    window.location.href = '/app/';
+                }, 3000);
+                return;
+            }
+            
+            try {
+                // Initialize Supabase
+                await SupabaseConfig.init();
+                const supabase = SupabaseConfig.getClient();
+                
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    throw new Error('Not logged in');
+                }
+                
+                document.getElementById('message').textContent = 'Exchanging authorization code...';
+                
+                // Exchange code for tokens
+                const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: '168543',
+                        client_secret: 'eb9621f5bb582ffdf6299ccdcb4da3815000a0ad',
+                        code: code,
+                        grant_type: 'authorization_code'
+                    })
+                });
+                
+                if (!tokenResponse.ok) {
+                    throw new Error('Token exchange failed');
+                }
+                
+                const tokenData = await tokenResponse.json();
+                
+                document.getElementById('message').textContent = 'Saving connection...';
+                
+                // Save to Supabase
+                const { error: dbError } = await supabase
+                    .from('strava_connections')
+                    .upsert({
+                        user_id: user.id,
+                        athlete_id: tokenData.athlete.id.toString(),
+                        athlete_name: `${tokenData.athlete.firstname} ${tokenData.athlete.lastname}`,
+                        access_token: tokenData.access_token,
+                        refresh_token: tokenData.refresh_token,
+                        expires_at: tokenData.expires_at,
+                        scope: tokenData.scope
+                    }, {
+                        onConflict: 'user_id'
+                    });
+                
+                if (dbError) throw dbError;
+                
+                document.getElementById('status').textContent = '✅ Connected!';
+                document.getElementById('message').textContent = 'Redirecting back to app...';
+                
+                setTimeout(() => {
+                    window.location.href = '/app/#settings';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Callback error:', error);
+                document.getElementById('status').textContent = 'Connection Error';
+                document.getElementById('message').innerHTML = 
+                    `<span class="error">${error.message}</span>`;
+                
+                setTimeout(() => {
+                    window.location.href = '/app/';
+                }, 3000);
+            }
+        }
+        
+        // Run on page load
+        handleCallback();
+    </script>
+</body>
+
+</html>

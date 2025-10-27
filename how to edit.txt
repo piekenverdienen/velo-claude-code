@@ -1,0 +1,16 @@
+# Polarized Cycling Training App - Gebruikershandleiding
+
+## 🎯 Snel aan de slag
+
+### Teksten aanpassen
+1. Open `assets/js/config/settings.js`
+2. Zoek naar `messages:`
+3. Pas de tekst aan tussen de aanhalingstekens
+4. Sla op en herlaad de pagina
+
+**Voorbeeld:**
+```javascript
+messages: {
+    welcome: "Jouw nieuwe welkomstbericht hier!",
+    workoutCompleted: "Geweldig gedaan! 💪"
+}

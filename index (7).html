@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Polarized.cc - Break the Rules. Train Smarter.</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Intake Section -->
+        <section id="intakeSection">
+            <div class="header">
+                <h1>Break the Rules.<br>Train Smarter.</h1>
+                <p>Build your personalized polarized training plan in 60 seconds</p>
+            </div>
+            <div id="intakeContainer" class="intake-container">
+                <!-- Wordt dynamisch gevuld -->
+            </div>
+        </section>
+
+        <!-- Main App Section -->
+        <section id="mainApp" class="hidden">
+            <div class="header">
+                <h1>Your Polarized Training HQ </h1>
+                <p id="welcomeText">80% easy, 20% hard. Welcome to the revolution.</p>
+            </div>
+            <nav id="navTabs" class="nav-tabs">
+                <!-- Wordt dynamisch gevuld -->
+            </nav>
+            <div id="contentArea">
+                <!-- Wordt dynamisch gevuld -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Kritieke modules ZONDER defer -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/modules/supabase-config.js"></script>
+    <script src="assets/js/config/settings.js"></script>
+    <script src="assets/js/modules/storage.js"></script>
+
+    <!-- Auth module NA storage -->
+    <script src="assets/js/modules/auth-module.js"></script>
+    <script src="assets/js/modules/strava-config.js"></script>
+    
+
+    <!-- Rest van de modules met defer -->
+    <script defer src="assets/js/config/workouts-db.js"></script>
+    <script defer src="assets/js/modules/workout.js"></script>
+    <script defer src="assets/js/modules/schedule.js"></script>
+    <script defer src="assets/js/modules/progress.js"></script>
+    <script defer src="assets/js/modules/ui.js"></script>
+    <script defer src="assets/js/modules/zwift-export.js"></script>
+    <script defer src="assets/js/modules/rpe-adaptation.js"></script>
+    <script defer src="assets/js/modules/weekly-adapter.js"></script>
+    <script defer src="assets/js/modules/cyclingclub.js"></script>
+    <script defer src="assets/js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polarized.cc - Start Your Free Training Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Polarized Purple Brand Colors */
+            --primary-purple: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --primary-light: #A78BFA;
+            --accent-purple: #9333EA;
+            --gradient-start: #8B5CF6;
+            --gradient-end: #EC4899;
+            --bg-dark: #0F0F1A;
+            --bg-darker: #09090F;
+            --surface: rgba(139, 92, 246, 0.05);
+            --surface-hover: rgba(139, 92, 246, 0.08);
+            --border: rgba(139, 92, 246, 0.2);
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0B8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, #1A0F2E 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-20px, -20px) rotate(1deg); }
+            66% { transform: translate(20px, -10px) rotate(-1deg); }
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Email Gate Styles */
+        .email-gate {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2),
+                        0 0 0 1px var(--border);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .email-gate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hero-emoji {
+            font-size: 72px;
+            margin-bottom: 24px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-title {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+
+        .benefits-grid {
+            text-align: left;
+            margin: 32px 0;
+            background: rgba(139, 92, 246, 0.03);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 1.05em;
+            color: var(--text-primary);
+        }
+
+        .benefit-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .benefit-icon {
+            color: var(--primary-purple);
+            margin-right: 16px;
+            font-size: 1.3em;
+            filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
+        }
+
+        .email-form {
+            margin-top: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(139, 92, 246, 0.05);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1.1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-group input[type="email"]::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-group input[type="email"]:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            background: rgba(139, 92, 246, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1),
+                        0 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .consent-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 24px 0;
+            font-size: 0.95em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .consent-label:hover {
+            color: var(--text-primary);
+        }
+
+        .consent-label input[type="checkbox"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-purple);
+        }
+
+        /* Honeypot field for spam protection */
+        .ohnohoney {
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 0;
+            width: 0;
+            z-index: -1;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4),
+                        0 0 60px rgba(139, 92, 246, 0.2);
+        }
+
+        .submit-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .privacy-note {
+            margin-top: 24px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .privacy-note a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .privacy-note a:hover {
+            color: var(--primary-purple);
+        }
+
+        /* Intake Form Styles */
+        .intake-wrapper {
+            display: none;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2),
+                        0 0 0 1px var(--border);
+            position: relative;
+        }
+
+        .intake-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .intake-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .intake-header h1 {
+            font-size: 2em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .intake-header p {
+            color: var(--text-secondary);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .progress-step {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-step.active {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-color: transparent;
+            box-shadow: 0 0 24px rgba(139, 92, 246, 0.5);
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: var(--primary-purple);
+            border-color: var(--primary-purple);
+        }
+
+        .progress-step.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 1.2em;
+        }
+
+        .progress-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            position: relative;
+        }
+
+        .progress-line.active {
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        /* Form Steps */
+        .intake-step {
+            display: none;
+            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .intake-step.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            font-size: 1.8em;
+            margin-bottom: 32px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        /* Goal Cards */
+        .goal-cards {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .goal-card {
+            padding: 24px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .goal-card:hover {
+            background: var(--surface-hover);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateX(4px);
+        }
+
+        .goal-card.selected {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 24px rgba(139, 92, 246, 0.2);
+        }
+
+        .goal-card h3 {
+            margin-bottom: 8px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .goal-card p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        /* Input with validation */
+        .input-group {
+            margin-bottom: 28px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 60px 16px 20px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1.05em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            background: var(--surface-hover);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .input-feedback {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .input-feedback.valid {
+            color: var(--success);
+        }
+
+        .input-feedback.invalid {
+            color: var(--error);
+        }
+
+        .input-hint {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .wkg-display {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        /* Days Selection */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .day-option {
+            padding: 16px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .day-option:hover {
+            background: var(--surface-hover);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .day-option.selected {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        /* Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border);
+            outline: none;
+            margin: 20px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 36px;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            padding: 16px 32px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 16px 36px;
+        }
+
+        .nav-btn.primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 48px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5));
+        }
+
+        .success-message h2 {
+            font-size: 2em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .success-message p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-size: 1.1em;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border);
+        }
+
+        .summary-box h3 {
+            margin-bottom: 24px;
+            font-size: 1.3em;
+            color: var(--primary-light);
+        }
+
+        .summary-box p {
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .summary-box p:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .summary-box strong {
+            color: var(--primary-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .email-gate, .intake-wrapper {
+                padding: 32px 24px;
+            }
+            
+            .hero-title {
+                font-size: 2em;
+            }
+            
+            .days-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+        }
+
+        /* Loading animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Email Gate -->
+        <div class="email-gate" id="emailGate">
+            <div class="hero-emoji">🚴</div>
+            <h1 class="hero-title">Start Your Free Training Plan</h1>
+            <p class="hero-subtitle">Join 10,000+ cyclists training smarter with polarized training</p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <span class="benefit-icon">✨</span>
+                    <span>6-week adaptive training plan</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">📊</span>
+                    <span>Smart RPE-based adjustments</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">🎯</span>
+                    <span>Zwift/Garmin workout exports</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">📈</span>
+                    <span>Progress tracking & analytics</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">💜</span>
+                    <span>100% free, no credit card</span>
+                </div>
+            </div>
+            
+            <form class="email-form" id="emailForm" onsubmit="handleEmailSubmit(event)">
+                <div class="form-group">
+                    <input type="email" id="userEmail" placeholder="your@email.com" required>
+                </div>
+                
+                <!-- Honeypot field for basic spam protection -->
+                <input type="text" name="website" class="ohnohoney" tabindex="-1" autocomplete="off">
+                
+                <label class="consent-label">
+                    <input type="checkbox" id="marketingConsent" checked>
+                    Send me training tips (max 2/month, unsubscribe anytime)
+                </label>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Start My Free Plan →
+                </button>
+                
+                <p class="privacy-note">
+                    No spam. Ever. <a href="/privacy">Privacy Policy</a>
+                </p>
+            </form>
+        </div>
+
+        <!-- Intake Form continues... -->
+        <div class="intake-wrapper" id="intakeForm">
+            <div class="intake-header">
+                <h1>Build Your Personalized Plan</h1>
+                <p>Answer a few questions to get your custom 6-week program</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-step active" id="progress1">1</div>
+                <div class="progress-line" id="line1"></div>
+                <div class="progress-step" id="progress2">2</div>
+                <div class="progress-line" id="line2"></div>
+                <div class="progress-step" id="progress3">3</div>
+                <div class="progress-line" id="line3"></div>
+                <div class="progress-step" id="progress4">4</div>
+            </div>
+
+            <!-- Step 1: Goal -->
+            <div class="intake-step active" id="step1">
+                <h2 class="step-title">What's Your Mission?</h2>
+                
+                <div class="goal-cards">
+                    <div class="goal-card" onclick="selectGoal('ftp', this)">
+                        <h3>⚡ Boost FTP</h3>
+                        <p>Increase your threshold power for racing and climbing</p>
+                    </div>
+                    <div class="goal-card" onclick="selectGoal('endurance', this)">
+                        <h3>🏔️ Build Endurance</h3>
+                        <p>Conquer gran fondos and century rides</p>
+                    </div>
+                    <div class="goal-card" onclick="selectGoal('climbing', this)">
+                        <h3>⛰️ Climb Stronger</h3>
+                        <p>Dominate hills with better power-to-weight</p>
+                    </div>
+                    <div class="goal-card" onclick="selectGoal('speed', this)">
+                        <h3>💨 Get Faster</h3>
+                        <p>Improve sprint power and top-end speed</p>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" disabled>Back</button>
+                    <button class="nav-btn primary" onclick="nextStep()" id="nextBtn1" disabled>Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Fitness Level -->
+            <div class="intake-step" id="step2">
+                <h2 class="step-title">Your Current Fitness</h2>
+                
+                <div class="input-group">
+                    <label for="ftp">FTP (Functional Threshold Power)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="ftp" min="100" max="500" placeholder="250" oninput="validateFTP(this)">
+                        <span class="input-feedback" id="ftpFeedback">watts</span>
+                    </div>
+                    <div class="input-hint">Your 1-hour max power in watts (100-500W)</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="weight">Weight</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="weight" min="40" max="150" placeholder="75" oninput="validateWeight(this)">
+                        <span class="input-feedback" id="weightFeedback">kg</span>
+                    </div>
+                    <div class="input-hint">Your body weight in kg (40-150kg)</div>
+                </div>
+
+                <div class="input-group">
+                    <label>Power to Weight Ratio</label>
+                    <div class="wkg-display">
+                        <span id="wkgRatio" style="font-size: 1.8em; font-weight: bold; color: var(--primary-light);">-</span>
+                        <span id="wkgCategory" style="margin-left: 16px; color: var(--text-secondary);"></span>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" onclick="previousStep()">← Back</button>
+                    <button class="nav-btn primary" onclick="nextStep()" id="nextBtn2" disabled>Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Training Schedule -->
+            <div class="intake-step" id="step3">
+                <h2 class="step-title">Training Schedule</h2>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 32px;">
+                    Select at least 3 days • We recommend 4-5 for optimal results
+                </p>
+                
+                <div class="days-grid">
+                    <div class="day-option" onclick="toggleDay(this, 'Monday')">Monday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Tuesday')">Tuesday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Wednesday')">Wednesday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Thursday')">Thursday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Friday')">Friday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Saturday')">Saturday</div>
+                    <div class="day-option" onclick="toggleDay(this, 'Sunday')">Sunday</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="hoursPerWeek">Weekly training hours</label>
+                    <input type="range" id="hoursPerWeek" min="3" max="15" value="6" oninput="updateHoursDisplay(this.value)">
+                    <div style="text-align: center; margin-top: 12px;">
+                        <span id="hoursDisplay" style="font-size: 1.8em; font-weight: bold; color: var(--primary-light);">6</span>
+                        <span style="color: var(--text-secondary); margin-left: 8px;">hours per week</span>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" onclick="previousStep()">← Back</button>
+                    <button class="nav-btn primary" onclick="nextStep()" id="nextBtn3" disabled>Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Confirmation -->
+            <div class="intake-step" id="step4">
+                <h2 class="step-title">Ready to Transform Your Cycling!</h2>
+                
+                <div class="summary-box">
+                    <h3>Your Training Profile</h3>
+                    <div id="summaryContent"></div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" onclick="previousStep()">← Back</button>
+                    <button class="nav-btn primary" onclick="generatePlan()">Generate My Plan 🚀</button>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage">
+                <div class="success-icon">✅</div>
+                <h2>Your Plan is Ready!</h2>
+                <p>Your personalized 6-week training plan has been generated</p>
+                <button class="nav-btn primary" onclick="goToDashboard()">Start Training →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let userData = {
+            email: '',
+            marketingConsent: false,
+            goal: '',
+            ftp: null,
+            weight: null,
+            trainingDays: [],
+            hoursPerWeek: 6,
+            timestamp: null
+        };
+
+        // Basic spam protection
+        let submitCount = 0;
+        let lastSubmitTime = 0;
+
+        // Email submission
+        function handleEmailSubmit(event) {
+            event.preventDefault();
+            
+            // Check honeypot
+            const honeypot = document.querySelector('input[name="website"]');
+            if (honeypot && honeypot.value !== '') {
+                console.log('Spam detected');
+                return false;
+            }
+            
+            // Rate limiting
+            const now = Date.now();
+            if (now - lastSubmitTime < 60000) {
+                submitCount++;
+                if (submitCount > 3) {
+                    alert('Too many attempts. Please wait a moment.');
+                    return false;
+                }
+            } else {
+                submitCount = 1;
+                lastSubmitTime = now;
+            }
+            
+            // Disable button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            submitBtn.classList.add('loading');
+            
+            // Get form data
+            userData.email = document.getElementById('userEmail').value;
+            userData.marketingConsent = document.getElementById('marketingConsent').checked;
+            userData.timestamp = new Date().toISOString();
+            
+            // Save to localStorage
+            localStorage.setItem('userEmail', userData.email);
+            localStorage.setItem('marketingConsent', userData.marketingConsent);
+            
+            // Simulate processing
+            setTimeout(() => {
+                document.getElementById('emailGate').style.display = 'none';
+                document.getElementById('intakeForm').style.display = 'block';
+            }, 500);
+        }
+
+        // Goal selection
+        function selectGoal(goal, element) {
+            userData.goal = goal;
+            
+            document.querySelectorAll('.goal-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            
+            document.getElementById('nextBtn1').disabled = false;
+        }
+
+        // FTP validation
+        function validateFTP(input) {
+            const value = parseInt(input.value);
+            const feedback = document.getElementById('ftpFeedback');
+            
+            if (value >= 100 && value <= 500) {
+                feedback.textContent = 'W ✓';
+                feedback.className = 'input-feedback valid';
+                userData.ftp = value;
+                updateWKG();
+                checkStep2();
+            } else if (input.value === '') {
+                feedback.textContent = 'watts';
+                feedback.className = 'input-feedback';
+            } else {
+                feedback.textContent = value < 100 ? 'Min 100W' : 'Max 500W';
+                feedback.className = 'input-feedback invalid';
+            }
+        }
+
+        // Weight validation
+        function validateWeight(input) {
+            const value = parseInt(input.value);
+            const feedback = document.getElementById('weightFeedback');
+            
+            if (value >= 40 && value <= 150) {
+                feedback.textContent = 'kg ✓';
+                feedback.className = 'input-feedback valid';
+                userData.weight = value;
+                updateWKG();
+                checkStep2();
+            } else if (input.value === '') {
+                feedback.textContent = 'kg';
+                feedback.className = 'input-feedback';
+            } else {
+                feedback.textContent = value < 40 ? 'Min 40kg' : 'Max 150kg';
+                feedback.className = 'input-feedback invalid';
+            }
+        }
+
+        // Calculate W/kg
+        function updateWKG() {
+            if (userData.ftp && userData.weight) {
+                const wkg = (userData.ftp / userData.weight).toFixed(2);
+                document.getElementById('wkgRatio').textContent = wkg + ' W/kg';
+                
+                let category = '';
+                let emoji = '';
+                if (wkg < 2.0) {
+                    category = 'Beginner';
+                    emoji = '🌱';
+                } else if (wkg < 3.0) {
+                    category = 'Intermediate';
+                    emoji = '🚴';
+                } else if (wkg < 4.0) {
+                    category = 'Advanced';
+                    emoji = '💪';
+                } else if (wkg < 5.0) {
+                    category = 'Expert';
+                    emoji = '🏆';
+                } else {
+                    category = 'Elite';
+                    emoji = '🚀';
+                }
+                
+                document.getElementById('wkgCategory').textContent = `${emoji} ${category}`;
+            }
+        }
+
+        // Check step 2 completion
+        function checkStep2() {
+            const ftpValid = userData.ftp >= 100 && userData.ftp <= 500;
+            const weightValid = userData.weight >= 40 && userData.weight <= 150;
+            document.getElementById('nextBtn2').disabled = !(ftpValid && weightValid);
+        }
+
+        // Day selection
+        function toggleDay(element, day) {
+            element.classList.toggle('selected');
+            
+            if (element.classList.contains('selected')) {
+                if (!userData.trainingDays.includes(day)) {
+                    userData.trainingDays.push(day);
+                }
+            } else {
+                userData.trainingDays = userData.trainingDays.filter(d => d !== day);
+            }
+            
+            document.getElementById('nextBtn3').disabled = userData.trainingDays.length < 3;
+        }
+
+        // Update hours display
+        function updateHoursDisplay(value) {
+            userData.hoursPerWeek = parseInt(value);
+            document.getElementById('hoursDisplay').textContent = value;
+        }
+
+        // Navigation
+        let currentStep = 1;
+
+        function nextStep() {
+            if (currentStep < 4) {
+                document.getElementById('progress' + currentStep).classList.add('completed');
+                document.getElementById('step' + currentStep).classList.remove('active');
+                document.getElementById('progress' + (currentStep + 1)).classList.add('active');
+                document.getElementById('line' + currentStep).classList.add('active');
+                
+                currentStep++;
+                document.getElementById('step' + currentStep).classList.add('active');
+                
+                if (currentStep === 4) {
+                    updateSummary();
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                document.getElementById('step' + currentStep).classList.remove('active');
+                document.getElementById('progress' + currentStep).classList.remove('active');
+                document.getElementById('line' + (currentStep - 1)).classList.remove('active');
+                document.getElementById('progress' + (currentStep - 1)).classList.remove('completed');
+                
+                currentStep--;
+                document.getElementById('step' + currentStep).classList.add('active');
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            const wkg = userData.ftp && userData.weight ? (userData.ftp / userData.weight).toFixed(2) : '-';
+            const goalNames = {
+                'ftp': '⚡ Boost FTP',
+                'endurance': '🏔️ Build Endurance',
+                'climbing': '⛰️ Climb Stronger',
+                'speed': '💨 Get Faster'
+            };
+            
+            document.getElementById('summaryContent').innerHTML = `
+                <p><strong>Goal</strong><span>${goalNames[userData.goal] || userData.goal}</span></p>
+                <p><strong>FTP</strong><span>${userData.ftp}W (${wkg} W/kg)</span></p>
+                <p><strong>Training Days</strong><span>${userData.trainingDays.length} days/week</span></p>
+                <p><strong>Schedule</strong><span>${userData.trainingDays.join(', ')}</span></p>
+                <p><strong>Weekly Volume</strong><span>${userData.hoursPerWeek} hours</span></p>
+                <p><strong>Training Method</strong><span>80/20 Polarized</span></p>
+            `;
+        }
+
+        // Generate plan - THIS IS THE KEY FUNCTION
+        function generatePlan() {
+            // Save all data with the correct keys your app expects
+            const appData = {
+                // Original intake data
+                ...userData,
+                // Additional fields your app might expect
+                userProfile: {
+                    ftp: userData.ftp,
+                    weight: userData.weight,
+                    email: userData.email,
+                    goal: userData.goal
+                },
+                trainingSettings: {
+                    days: userData.trainingDays,
+                    hoursPerWeek: userData.hoursPerWeek,
+                    trainingType: 'polarized'
+                },
+                // Flag to skip intake in main app
+                intakeCompleted: true,
+                planGenerated: false
+            };
+            
+            // Save with multiple keys for compatibility
+            localStorage.setItem('userData', JSON.stringify(appData));
+            localStorage.setItem('userProfile', JSON.stringify(appData.userProfile));
+            localStorage.setItem('trainingSettings', JSON.stringify(appData.trainingSettings));
+            localStorage.setItem('intakeCompleted', 'true');
+            
+            // Show success
+            document.querySelector('.intake-header').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            document.getElementById('step4').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+        }
+
+        // Go to dashboard with special flag
+        function goToDashboard() {
+            // Redirect with flag to skip intake
+            window.location.href = '/app/index.html?skipIntake=true&source=newIntake';
+        }
+
+        // Check on load
+        window.onload = function() {
+            // Optional: Check if user already completed intake
+            const intakeCompleted = localStorage.getItem('intakeCompleted');
+            if (intakeCompleted === 'true' && window.location.pathname.includes('intake')) {
+                // User already did intake, show option to redo or go to app
+                const confirmed = confirm('You already have a training plan. Create a new one?');
+                if (!confirmed) {
+                    window.location.href = '/app/';
+                }
+            }
+        };
+    </script>
+</body>
+</html>

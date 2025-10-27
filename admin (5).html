@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polarized Admin - Workout Editor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        h1 {
+            color: #9333ea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #9333ea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #7c3aec;
+        }
+        
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .copy-btn {
+            margin-top: 10px;
+            background: #10b981;
+        }
+        
+        .copy-btn:hover {
+            background: #059669;
+        }
+        
+        .duration-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚴 Workout Editor</h1>
+    <p>Maak nieuwe workouts voor je Polarized Training App</p>
+    
+    <form id="workoutForm">
+        <div class="form-group">
+            <label for="workoutName">Workout Naam</label>
+            <input type="text" id="workoutName" placeholder="bijv. Zone 1 Base Builder" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="goal">Training Doel</label>
+            <select id="goal" required>
+                <option value="ftp">FTP (Power)</option>
+                <option value="climbing">Climbing</option>
+                <option value="granfondo">Gran Fondo</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="intensity">Intensiteit</label>
+            <select id="intensity" required>
+                <option value="easy">Easy (Zone 1)</option>
+                <option value="moderate">Moderate (Zone 2)</option>
+                <option value="hard">Hard (Zone 3+)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Duur (minuten)</label>
+            <div class="duration-inputs">
+                <div>
+                    <label style="font-weight: normal;">Starter</label>
+                    <input type="number" id="durationStarter" placeholder="60" required>
+                </div>
+                <div>
+                    <label style="font-weight: normal;">Regular</label>
+                    <input type="number" id="durationRegular" placeholder="75" required>
+                </div>
+                <div>
+                    <label style="font-weight: normal;">Serious</label>
+                    <input type="number" id="durationSerious" placeholder="90" required>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="powerZone">Power Zone (bijv. "65% FTP" of "80-85% FTP")</label>
+            <input type="text" id="powerZone" placeholder="65% FTP" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Korte Beschrijving</label>
+            <textarea id="description" placeholder="Easy spin. This is your 80%. Keep it conversational." required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="details">Workout Details</label>
+            <textarea id="details" placeholder="Warm-up: 10 min easy spin. Main: Steady Zone 1. Cool-down: 5 min spin." required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="tips">Pro Tips</label>
+            <textarea id="tips" placeholder="If you're breathing hard, you're going too hard. This builds your aerobic engine." required></textarea>
+        </div>
+        
+        <button type="submit">Genereer Workout Code</button>
+    </form>
+    
+    <div id="output" style="display: none;">
+        <strong>Kopieer deze code naar workouts-db.js:</strong>
+        <pre id="generatedCode"></pre>
+        <button class="copy-btn" onclick="copyCode()">📋 Kopieer Code</button>
+    </div>
+    
+    <script>
+        document.getElementById('workoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const workout = {
+                name: document.getElementById('workoutName').value,
+                duration: {
+                    starter: parseInt(document.getElementById('durationStarter').value),
+                    regular: parseInt(document.getElementById('durationRegular').value),
+                    serious: parseInt(document.getElementById('durationSerious').value)
+                },
+                intensity: document.getElementById('powerZone').value,
+                description: document.getElementById('description').value,
+                details: document.getElementById('details').value,
+                tips: document.getElementById('tips').value
+            };
+            
+            const goal = document.getElementById('goal').value;
+            const intensity = document.getElementById('intensity').value;
+            
+            const code = `
+// Voeg dit toe aan WORKOUTS_DB.${goal}.${intensity} array:
+{
+    name: "${workout.name}",
+    duration: {starter: ${workout.duration.starter}, regular: ${workout.duration.regular}, serious: ${workout.duration.serious}},
+    intensity: "${workout.intensity}",
+    description: "${workout.description}",
+    details: "${workout.details}",
+    tips: "${workout.tips}"
+},`;
+            
+            document.getElementById('generatedCode').textContent = code;
+            document.getElementById('output').style.display = 'block';
+        });
+        
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code gekopieerd! Plak het in workouts-db.js');
+            });
+        }
+    </script>
+</body>
+</html>
