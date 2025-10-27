@@ -472,7 +472,7 @@ const App = (function () {
                     </div>
                 `;
             } else {
-                const intensityConfig = APP_CONFIG.intensityConfig[workout.intensity || 'easy'];
+                const intensityConfig = APP_CONFIG.intensityConfig[workout.intensity || 'easy'] || APP_CONFIG.intensityConfig.easy;
                 const rpeData = appState.rpeHistory?.find(r => r.workoutKey === historyKey);
                 const qualityScore = appState.workoutScores?.[historyKey];
                 const duration = workout.duration || 60;
@@ -492,13 +492,13 @@ const App = (function () {
                             </span>
                         </div>
                         <div class="workout-badges" style="margin-top: 12px;">
-                            ${WorkoutModule.getIntensityBadge(workout.intensity)}
+                            ${WorkoutModule.getIntensityBadge(workout.intensity || 'easy')}
                             ${isCompleted ? '<span class="badge badge-easy">✅ Done</span>' : ''}
                             ${rpeData ? `<span class="badge" style="background: #10b981;">RPE: ${rpeData.rpe}</span>` : ''}
                             ${qualityScore ? `<span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">⭐ ${qualityScore.total}/10</span>` : ''}
                             ${workout.adapted ? '<span class="badge" style="background: #6366f1;">⚡ Adapted</span>' : ''}
                         </div>
-                        <p class="workout-description">${intensityConfig.description}</p>
+                        <p class="workout-description">${workout.description || intensityConfig.description}</p>
                         <div class="workout-actions">
                             ${!isCompleted ? `<button class="btn btn-primary" onclick="App.completeWorkout('${trainingDay}', ${appState.currentWeek})">${APP_CONFIG.labels.markComplete}</button>` : ''}
                             <button class="btn btn-secondary" onclick="App.viewWorkoutDetails('${trainingDay}')">${APP_CONFIG.labels.viewDetails}</button>
@@ -769,13 +769,18 @@ const App = (function () {
                     workoutDuration = alternative.duration || currentWorkout.duration || 60;
                 }
 
+                // Ensure intensity is preserved/set
+                const workoutIntensity = alternative.intensity || currentWorkout.intensity || 'easy';
+
                 appState.schedule[week || appState.currentWeek][dayName] = {
                     ...alternative,
-                    duration: workoutDuration
+                    duration: workoutDuration,
+                    intensity: workoutIntensity
                 };
 
                 StorageModule.saveState(appState);
                 updateToday();
+                updateWeekView();
                 UIModule.showNotification(APP_CONFIG.messages.workoutSwapped);
             } else {
                 UIModule.showNotification(APP_CONFIG.messages.noAlternative);
