@@ -645,15 +645,32 @@ const App = (function () {
             UIModule.navigateToStep(step);
         },
 
+        /**
+         * Generate training plan based on user preferences
+         * Shows loading spinner during schedule generation
+         */
         generatePlan: function () {
-            // Generate schedule
-            appState.schedule = ScheduleModule.generateSchedule(
-                appState.goal,
-                appState.timeCommitment,
-                appState.preferredDays
-            );
+            // Show loading spinner
+            UIModule.showLoading('Generating your training plan...', 'This may take a few moments');
 
-            UIModule.navigateToStep(4);
+            // Use setTimeout to allow UI to update before heavy computation
+            setTimeout(() => {
+                try {
+                    // Generate schedule
+                    appState.schedule = ScheduleModule.generateSchedule(
+                        appState.goal,
+                        appState.timeCommitment,
+                        appState.preferredDays
+                    );
+
+                    UIModule.hideLoading();
+                    UIModule.navigateToStep(4);
+                } catch (error) {
+                    UIModule.hideLoading();
+                    console.error('Failed to generate schedule:', error);
+                    UIModule.showNotification('Failed to generate training plan. Please try again.', 'error');
+                }
+            }, 100);
         },
 
         startApp: function () {
@@ -1072,6 +1089,10 @@ const App = (function () {
             this.updateAdaptationPreview();
         },
 
+        /**
+         * Apply weekly adaptation based on user's available time slots
+         * Redistributes workouts while maintaining training principles
+         */
         applyWeeklyAdaptation: function () {
             const weekNum = appState.currentWeek;
             const timeSlots = window.currentTimeSlots;
@@ -1086,47 +1107,61 @@ const App = (function () {
                 return;
             }
 
-            if (!appState.originalSchedule) {
-                appState.originalSchedule = {};
-            }
-            if (!appState.originalSchedule[weekNum]) {
-                appState.originalSchedule[weekNum] = JSON.parse(JSON.stringify(appState.schedule[weekNum]));
-            }
+            // Show loading spinner
+            UIModule.showLoading('Adapting your week...', 'Redistributing workouts based on your time');
 
-            const result = WeeklyAdapter.adaptSchedule(
-                appState.originalSchedule,
-                weekNum,
-                timeSlots,
-                {
-                    preferredDays: appState.preferredDays,
-                    goal: appState.goal
+            // Use setTimeout to allow UI to update
+            setTimeout(() => {
+                try {
+                    if (!appState.originalSchedule) {
+                        appState.originalSchedule = {};
+                    }
+                    if (!appState.originalSchedule[weekNum]) {
+                        appState.originalSchedule[weekNum] = JSON.parse(JSON.stringify(appState.schedule[weekNum]));
+                    }
+
+                    const result = WeeklyAdapter.adaptSchedule(
+                        appState.originalSchedule,
+                        weekNum,
+                        timeSlots,
+                        {
+                            preferredDays: appState.preferredDays,
+                            goal: appState.goal
+                        }
+                    );
+
+                    if (!appState.weeklyAdaptations) {
+                        appState.weeklyAdaptations = {};
+                    }
+
+                    appState.weeklyAdaptations[weekNum] = {
+                        timeSlots: timeSlots,
+                        adaptedSchedule: result.schedule,
+                        summary: result.summary,
+                        appliedAt: new Date().toISOString()
+                    };
+
+                    appState.schedule[weekNum] = result.schedule;
+
+                    StorageModule.saveState(appState);
+
+                    updateToday();
+                    updateWeekView();
+                    updateStats();
+
+                    UIModule.hideLoading();
+
+                    UIModule.showNotification(
+                        `Week adapted! ${result.summary.adaptedWorkouts} workouts, ${result.summary.polarizationScore}% polarization.`
+                    );
+
+                    this.closeAdapterModal();
+                } catch (error) {
+                    UIModule.hideLoading();
+                    console.error('Failed to adapt week:', error);
+                    UIModule.showNotification('Failed to adapt week. Please try again.', 'error');
                 }
-            );
-
-            if (!appState.weeklyAdaptations) {
-                appState.weeklyAdaptations = {};
-            }
-
-            appState.weeklyAdaptations[weekNum] = {
-                timeSlots: timeSlots,
-                adaptedSchedule: result.schedule,
-                summary: result.summary,
-                appliedAt: new Date().toISOString()
-            };
-
-            appState.schedule[weekNum] = result.schedule;
-
-            StorageModule.saveState(appState);
-
-            updateToday();
-            updateWeekView();
-            updateStats();
-
-            UIModule.showNotification(
-                `Week adapted! ${result.summary.adaptedWorkouts} workouts, ${result.summary.polarizationScore}% polarization.`
-            );
-
-            this.closeAdapterModal();
+            }, 100);
         },
 
         removeWeeklyAdaptation: function () {

@@ -1161,6 +1161,130 @@ const UIModule = (function () {
             if (intensity <= 0.90) return 'zone-3';
             if (intensity <= 1.05) return 'zone-4';
             return 'zone-5';
+        },
+
+        /**
+         * Show loading spinner overlay
+         * @param {string} message - Loading message to display
+         * @param {string} [submessage] - Optional secondary message
+         */
+        showLoading: function (message = 'Loading...', submessage = '') {
+            // Remove existing spinner if present
+            this.hideLoading();
+
+            const spinner = document.createElement('div');
+            spinner.id = 'global-loading-spinner';
+            spinner.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="loading-spinner-container">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-message">${message}</p>
+                        ${submessage ? `<p class="loading-submessage">${submessage}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(spinner);
+
+            // Add CSS if not already present
+            if (!document.getElementById('loading-spinner-styles')) {
+                const style = document.createElement('style');
+                style.id = 'loading-spinner-styles';
+                style.textContent = `
+                    .loading-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.75);
+                        backdrop-filter: blur(4px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 10000;
+                        animation: fadeIn 0.2s ease-in;
+                    }
+
+                    .loading-spinner-container {
+                        background: var(--card-bg, #1f2937);
+                        padding: 40px 60px;
+                        border-radius: 16px;
+                        text-align: center;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(168, 85, 247, 0.2);
+                    }
+
+                    .loading-spinner {
+                        border: 4px solid rgba(168, 85, 247, 0.1);
+                        border-top-color: #a855f7;
+                        border-radius: 50%;
+                        width: 50px;
+                        height: 50px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 20px;
+                    }
+
+                    .loading-message {
+                        color: var(--text-primary, #ffffff);
+                        font-size: 1.125rem;
+                        font-weight: 600;
+                        margin: 0 0 8px 0;
+                    }
+
+                    .loading-submessage {
+                        color: var(--text-secondary, #9ca3af);
+                        font-size: 0.875rem;
+                        margin: 0;
+                    }
+
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        },
+
+        /**
+         * Update loading spinner message
+         * @param {string} message - New loading message
+         * @param {string} [submessage] - Optional secondary message
+         */
+        updateLoading: function (message, submessage = '') {
+            const spinner = document.getElementById('global-loading-spinner');
+            if (spinner) {
+                const messageEl = spinner.querySelector('.loading-message');
+                const submessageEl = spinner.querySelector('.loading-submessage');
+
+                if (messageEl) messageEl.textContent = message;
+
+                if (submessage) {
+                    if (submessageEl) {
+                        submessageEl.textContent = submessage;
+                    } else {
+                        const newSubmessage = document.createElement('p');
+                        newSubmessage.className = 'loading-submessage';
+                        newSubmessage.textContent = submessage;
+                        messageEl.parentNode.appendChild(newSubmessage);
+                    }
+                }
+            }
+        },
+
+        /**
+         * Hide loading spinner
+         */
+        hideLoading: function () {
+            const spinner = document.getElementById('global-loading-spinner');
+            if (spinner) {
+                spinner.style.animation = 'fadeOut 0.2s ease-out';
+                setTimeout(() => spinner.remove(), 200);
+            }
         }
     };
 })();

@@ -615,7 +615,11 @@ const StravaConfig = {
         return match;
     },
 
-    // Sync Activities - Manual trigger
+    /**
+     * Sync Activities - Manual trigger
+     * Fetches recent Strava activities and matches them with planned workouts
+     * @returns {Promise<Array|null>} Array of activities or null on error
+     */
     async syncActivities() {
         const connection = await this.checkConnection();
         if (!connection) {
@@ -624,12 +628,14 @@ const StravaConfig = {
         }
 
         try {
-            UIModule.showNotification('🔄 Fetching activities from Strava...');
+            // Show loading spinner
+            UIModule.showLoading('Connecting to Strava...', 'Fetching your recent activities');
 
             // Get activities
             const activities = await this.getRecentActivities(30);
 
             if (!activities || activities.length === 0) {
+                UIModule.hideLoading();
                 UIModule.showNotification('No activities found');
                 return [];
             }
@@ -638,17 +644,28 @@ const StravaConfig = {
             const appState = StorageModule.loadState();
 
             if (!appState.programStartDate) {
+                UIModule.hideLoading();
                 UIModule.showNotification('⚠️ Please start your training program first', 'warning');
                 return [];
             }
 
+            UIModule.updateLoading('Analyzing workouts...', `Found ${activities.length} activities`);
+
             // Analyze and match activities
             const matches = [];
             const unmatchedActivities = [];
+            let processedCount = 0;
+            const totalRides = activities.filter(a => a.type === 'Ride' || a.type === 'VirtualRide').length;
 
             for (const activity of activities) {
                 // Include virtual rides too
                 if (activity.type !== 'Ride' && activity.type !== 'VirtualRide') continue;
+
+                processedCount++;
+                UIModule.updateLoading(
+                    'Matching activities to workouts...',
+                    `Processing activity ${processedCount}/${totalRides}`
+                );
 
                 const match = await this.findBestWorkoutMatchRolling(activity, appState);
 
@@ -658,6 +675,11 @@ const StravaConfig = {
                     const hasPowerData = activity.has_power || activity.device_watts || activity.average_watts;
 
                     if (hasPowerData && appState.ftp) {
+                        UIModule.updateLoading(
+                            'Calculating quality scores...',
+                            `Analyzing ${match.activity.name.substring(0, 30)}...`
+                        );
+
                         try {
                             const qualityScore = await this.analyzeWorkoutQuality(
                                 match.activity,
@@ -690,6 +712,9 @@ const StravaConfig = {
             // Store matches for confirmSyncMatches to access
             this.currentSyncMatches = matches;
 
+            // Hide loading spinner before showing modal
+            UIModule.hideLoading();
+
             // Show sync results modal
             if (matches.length > 0 || unmatchedActivities.length > 0) {
                 this.showSyncResultsModal(matches, unmatchedActivities);
@@ -700,8 +725,9 @@ const StravaConfig = {
             return activities;
 
         } catch (error) {
+            UIModule.hideLoading();
             console.error('❌ Sync failed:', error);
-            UIModule.showNotification('Failed to sync activities', 'error');
+            UIModule.showNotification('Failed to sync with Strava. Check your connection and try again.', 'error');
             return null;
         }
     },
