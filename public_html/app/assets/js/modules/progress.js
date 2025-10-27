@@ -167,7 +167,9 @@ const ProgressModule = (function () {
                         <div class="stat-label">Current Streak</div>
                     </div>
                 </div>
-                
+
+                ${this.generateQualityScoresHTML(appState)}
+
                 <h3 style="font-size: 1.5rem; margin-bottom: 16px; text-align: center;">Week by Week Breakdown</h3>
                 <div style="display: grid; gap: 16px; margin-top: 24px;">
             `;
@@ -280,6 +282,113 @@ const ProgressModule = (function () {
             `;
 
             return html;
+        },
+
+        // Generate Workout Quality Scores HTML
+        generateQualityScoresHTML: function (appState) {
+            if (!appState.workoutScores || Object.keys(appState.workoutScores).length === 0) {
+                return ''; // No quality scores yet
+            }
+
+            const scores = Object.values(appState.workoutScores);
+            const avgTotalScore = scores.reduce((sum, s) => sum + (s.total || 0), 0) / scores.length;
+            const avgDurationScore = scores.reduce((sum, s) => sum + (s.duration || 0), 0) / scores.length;
+            const avgPowerZonesScore = scores.reduce((sum, s) => sum + (s.powerZones || 0), 0) / scores.length;
+            const avgCompletionScore = scores.reduce((sum, s) => sum + (s.completion || 0), 0) / scores.length;
+
+            // Color coding for scores
+            const getScoreColor = (score) => {
+                if (score >= 8) return '#10b981'; // green
+                if (score >= 6) return '#f59e0b'; // yellow
+                return '#ef4444'; // red
+            };
+
+            // Find best workout
+            const bestWorkout = scores.reduce((best, current) =>
+                (current.total > best.total) ? current : best
+            , scores[0]);
+
+            return `
+                <div class="info-box" style="margin-bottom: 32px; background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 16px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">⭐</span>
+                        Workout Quality Analysis
+                    </h3>
+                    <p style="color: var(--text-secondary); text-align: center; margin-bottom: 24px; font-size: 0.875rem;">
+                        Based on ${scores.length} Strava-synced workout${scores.length > 1 ? 's' : ''} with power data
+                    </p>
+
+                    <!-- Overall Quality Score -->
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <div style="display: inline-block; background: ${getScoreColor(avgTotalScore)}; color: white; border-radius: 50%; width: 120px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <div style="font-size: 2.5rem; font-weight: 700;">${avgTotalScore.toFixed(1)}</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">/ 10</div>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 1.125rem; font-weight: 600; color: var(--primary-light);">
+                            Average Quality Score
+                        </div>
+                    </div>
+
+                    <!-- Component Scores -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                        <!-- Duration Score -->
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: ${getScoreColor(avgDurationScore)}; margin-bottom: 8px;">
+                                ${avgDurationScore.toFixed(1)}/10
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 4px;">⏱️ Duration</div>
+                            <div style="color: var(--accent); font-size: 0.75rem;">30% weight</div>
+                        </div>
+
+                        <!-- Power Zones Score -->
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: ${getScoreColor(avgPowerZonesScore)}; margin-bottom: 8px;">
+                                ${avgPowerZonesScore.toFixed(1)}/10
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 4px;">⚡ Power Zones</div>
+                            <div style="color: var(--accent); font-size: 0.75rem;">40% weight</div>
+                        </div>
+
+                        <!-- Completion Score -->
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: ${getScoreColor(avgCompletionScore)}; margin-bottom: 8px;">
+                                ${avgCompletionScore.toFixed(1)}/10
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 4px;">✅ Completion</div>
+                            <div style="color: var(--accent); font-size: 0.75rem;">30% weight</div>
+                        </div>
+                    </div>
+
+                    <!-- Best Workout Achievement -->
+                    ${bestWorkout.total >= 8 ? `
+                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.125rem; font-weight: 600; color: #10b981; margin-bottom: 8px;">
+                                🏆 Best Workout: ${bestWorkout.total.toFixed(1)}/10
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                                You nailed it! Keep up this level of execution!
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Quality Score Explanation -->
+                    <details style="margin-top: 24px; cursor: pointer;">
+                        <summary style="color: var(--primary-light); font-weight: 600; font-size: 0.875rem; list-style: none; display: flex; align-items: center; gap: 8px;">
+                            <span style="transform: rotate(0deg); transition: transform 0.2s;">▶</span>
+                            How are quality scores calculated?
+                        </summary>
+                        <div style="margin-top: 12px; padding-left: 24px; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.6;">
+                            <p style="margin-bottom: 12px;">Quality scores analyze your actual Strava activity data against your scheduled workouts:</p>
+                            <ul style="list-style: disc; padding-left: 20px; margin-bottom: 12px;">
+                                <li><strong>Duration (30%):</strong> How close your ride duration matches the scheduled time</li>
+                                <li><strong>Power Zones (40%):</strong> Percentage of time spent in the correct power zones</li>
+                                <li><strong>Completion (30%):</strong> For interval workouts, how many intervals you completed</li>
+                            </ul>
+                            <p style="font-size: 0.75rem; opacity: 0.8;">💡 Scores require power meter data from Strava activities</p>
+                        </div>
+                    </details>
+                </div>
+            `;
         },
 
         // Bereken TSS (Training Stress Score) estimate - blijft hetzelfde

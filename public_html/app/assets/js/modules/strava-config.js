@@ -1,4 +1,4 @@
-// Strava Configuration & API Handler - PRODUCTION VERSION
+// Strava Configuration & API Handler - PRODUCTION VERSION WITH ADVANCED SCORING
 const StravaConfig = {
     clientId: '168543',
     clientSecret: 'eb9621f5bb582ffdf6299ccdcb4da3815000a0ad',
@@ -10,13 +10,14 @@ const StravaConfig = {
     scope: 'read,activity:read_all',
     authUrl: 'https://www.strava.com/oauth/authorize',
 
-    // Zone configurations for power analysis
+    // Zone configurations for power analysis (% of FTP)
     powerZones: {
-        zone1: { min: 0, max: 0.55 },
-        zone2: { min: 0.56, max: 0.75 },
-        zone3: { min: 0.76, max: 0.90 },
-        zone4: { min: 0.91, max: 1.05 },
-        zone5: { min: 1.06, max: 2.00 }
+        zone1: { min: 0, max: 0.55, name: 'Recovery' },
+        zone2: { min: 0.56, max: 0.75, name: 'Endurance' },
+        zone3: { min: 0.76, max: 0.90, name: 'Tempo' },
+        zone4: { min: 0.91, max: 1.05, name: 'Threshold' },
+        zone5: { min: 1.06, max: 1.20, name: 'VO2max' },
+        zone6: { min: 1.21, max: 2.50, name: 'Anaerobic' }
     },
 
     // Helper function to calculate days since program start
@@ -242,8 +243,269 @@ const StravaConfig = {
         }
     },
 
-    // UPDATED: Find best matching workout for ROLLING WEEK
-    findBestWorkoutMatchRolling(activity, appState) {
+    // 🆕 FASE 1: Fetch detailed activity streams for power analysis
+    async getActivityStreams(activityId) {
+        const connection = await this.checkConnection();
+        if (!connection) {
+            console.log('No Strava connection for streams');
+            return null;
+        }
+
+        try {
+            const streamTypes = ['watts', 'heartrate', 'time', 'cadence', 'moving', 'altitude'];
+            const response = await fetch(
+                `https://www.strava.com/api/v3/activities/${activityId}/streams?keys=${streamTypes.join(',')}&key_by_type=true`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${connection.access_token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                console.warn(`Failed to fetch streams for activity ${activityId}`);
+                return null;
+            }
+
+            const streams = await response.json();
+            console.log(`✅ Fetched streams for activity ${activityId}`);
+            return streams;
+
+        } catch (error) {
+            console.error('Error fetching activity streams:', error);
+            return null;
+        }
+    },
+
+    // 🆕 FASE 1: Calculate time spent in each power zone
+    calculateTimeInZones(wattsArray, ftp) {
+        if (!wattsArray || !ftp || wattsArray.length === 0) {
+            return null;
+        }
+
+        const zones = {
+            zone1: 0,
+            zone2: 0,
+            zone3: 0,
+            zone4: 0,
+            zone5: 0,
+            zone6: 0
+        };
+
+        wattsArray.forEach(watts => {
+            const normalized = watts / ftp;
+
+            if (normalized <= this.powerZones.zone1.max) zones.zone1++;
+            else if (normalized <= this.powerZones.zone2.max) zones.zone2++;
+            else if (normalized <= this.powerZones.zone3.max) zones.zone3++;
+            else if (normalized <= this.powerZones.zone4.max) zones.zone4++;
+            else if (normalized <= this.powerZones.zone5.max) zones.zone5++;
+            else zones.zone6++;
+        });
+
+        // Convert counts to percentages
+        const total = wattsArray.length;
+        Object.keys(zones).forEach(zone => {
+            zones[zone] = (zones[zone] / total) * 100;
+        });
+
+        return zones;
+    },
+
+    // 🆕 FASE 1: Detect intervals in power data
+    detectIntervals(wattsArray, ftp, minIntervalSeconds = 60) {
+        if (!wattsArray || !ftp || wattsArray.length === 0) {
+            return [];
+        }
+
+        const threshold = ftp * 1.05; // Zone 4+ = interval
+        const intervals = [];
+        let inInterval = false;
+        let intervalStart = 0;
+        let intervalWatts = [];
+
+        wattsArray.forEach((watts, index) => {
+            if (!inInterval && watts > threshold) {
+                // Interval starts
+                inInterval = true;
+                intervalStart = index;
+                intervalWatts = [watts];
+            } else if (inInterval && watts > threshold) {
+                // Still in interval
+                intervalWatts.push(watts);
+            } else if (inInterval && watts <= threshold) {
+                // Interval ends - but only count if long enough
+                const duration = index - intervalStart;
+                if (duration >= minIntervalSeconds) {
+                    intervals.push({
+                        start: intervalStart,
+                        end: index,
+                        duration: duration,
+                        avgWatts: intervalWatts.reduce((a, b) => a + b, 0) / intervalWatts.length,
+                        normalizedPower: intervalWatts.reduce((a, b) => a + b, 0) / intervalWatts.length / ftp
+                    });
+                }
+                inInterval = false;
+                intervalWatts = [];
+            }
+        });
+
+        return intervals;
+    },
+
+    // 🆕 FASE 1: Score power zone accuracy based on workout type
+    scorePowerZoneAccuracy(timeInZones, workoutIntensity) {
+        if (!timeInZones) return 5; // Default middle score
+
+        let score = 0;
+
+        switch (workoutIntensity) {
+            case 'easy':
+                // Easy = mainly Zone 2 (56-75% FTP)
+                const easyZoneTime = timeInZones.zone2;
+                if (easyZoneTime >= 80) score = 10;
+                else if (easyZoneTime >= 70) score = 9;
+                else if (easyZoneTime >= 60) score = 8;
+                else if (easyZoneTime >= 50) score = 6;
+                else score = 4;
+                break;
+
+            case 'moderate':
+                // Moderate = mix of Zone 2-3 (tempo/sweet spot)
+                const moderateZoneTime = timeInZones.zone2 + timeInZones.zone3;
+                if (moderateZoneTime >= 75) score = 10;
+                else if (moderateZoneTime >= 65) score = 9;
+                else if (moderateZoneTime >= 55) score = 7;
+                else score = 5;
+                break;
+
+            case 'hard':
+                // Hard = significant time in Zone 4-5 (threshold/VO2max)
+                const hardZoneTime = timeInZones.zone4 + timeInZones.zone5 + timeInZones.zone6;
+                if (hardZoneTime >= 25) score = 10;
+                else if (hardZoneTime >= 20) score = 9;
+                else if (hardZoneTime >= 15) score = 8;
+                else if (hardZoneTime >= 10) score = 6;
+                else score = 4;
+                break;
+
+            default:
+                score = 5;
+        }
+
+        return score;
+    },
+
+    // 🆕 FASE 1: Advanced workout quality analysis
+    async analyzeWorkoutQuality(activity, scheduledWorkout, ftp) {
+        console.log(`🔬 Analyzing workout quality for: ${activity.name}`);
+
+        // Initialize score components
+        const score = {
+            duration: 0,      // 30% weight
+            powerZones: 0,    // 40% weight
+            completion: 0,    // 30% weight
+            total: 0,
+            details: {}
+        };
+
+        // 1️⃣ DURATION SCORE (30%)
+        const activityMinutes = Math.round(activity.moving_time / 60);
+        const scheduledMinutes = scheduledWorkout.duration || 60;
+        const durationRatio = activityMinutes / scheduledMinutes;
+
+        if (durationRatio >= 0.95 && durationRatio <= 1.05) {
+            score.duration = 10; // Perfect!
+        } else if (durationRatio >= 0.90 && durationRatio <= 1.10) {
+            score.duration = 8;  // Good
+        } else if (durationRatio >= 0.85 && durationRatio <= 1.15) {
+            score.duration = 6;  // Acceptable
+        } else {
+            score.duration = Math.max(2, 10 - Math.abs(durationRatio - 1) * 20);
+        }
+
+        score.details.duration = {
+            actual: activityMinutes,
+            scheduled: scheduledMinutes,
+            ratio: Math.round(durationRatio * 100)
+        };
+
+        // 2️⃣ POWER ZONE ACCURACY (40%) - If power data available
+        if (activity.has_power && ftp) {
+            const streams = await this.getActivityStreams(activity.id);
+
+            if (streams && streams.watts && streams.watts.data) {
+                const wattsData = streams.watts.data;
+                const timeInZones = this.calculateTimeInZones(wattsData, ftp);
+
+                score.powerZones = this.scorePowerZoneAccuracy(timeInZones, scheduledWorkout.intensity);
+                score.details.timeInZones = timeInZones;
+
+                // 3️⃣ INTERVAL COMPLETION (30%) - For hard workouts
+                if (scheduledWorkout.intensity === 'hard') {
+                    const intervals = this.detectIntervals(wattsData, ftp);
+
+                    // Expected 4-6 intervals for most hard workouts
+                    const expectedIntervals = 5;
+                    const intervalScore = Math.min(10, (intervals.length / expectedIntervals) * 10);
+
+                    score.completion = intervalScore;
+                    score.details.intervals = {
+                        detected: intervals.length,
+                        expected: expectedIntervals,
+                        details: intervals
+                    };
+                } else {
+                    // For easy/moderate, completion = duration compliance
+                    score.completion = score.duration;
+                }
+            } else {
+                console.warn('No power streams available, using defaults');
+                score.powerZones = 5;
+                score.completion = score.duration;
+            }
+        } else {
+            // No power data - use simpler scoring
+            console.log('No power data available for this activity');
+            score.powerZones = activity.average_watts ?
+                this.estimateIntensityScore(activity.average_watts, ftp, scheduledWorkout.intensity) : 5;
+            score.completion = score.duration;
+            score.details.noPowerData = true;
+        }
+
+        // 📊 CALCULATE WEIGHTED TOTAL (1-10 scale)
+        score.total = Math.round(
+            (score.duration * 0.30) +
+            (score.powerZones * 0.40) +
+            (score.completion * 0.30)
+        );
+
+        score.details.breakdown = {
+            duration: `${score.duration}/10 (30% weight)`,
+            powerZones: `${score.powerZones}/10 (40% weight)`,
+            completion: `${score.completion}/10 (30% weight)`
+        };
+
+        console.log(`📊 Workout Score: ${score.total}/10`, score.details);
+
+        return score;
+    },
+
+    // Helper: Estimate intensity score from average watts (fallback)
+    estimateIntensityScore(avgWatts, ftp, scheduledIntensity) {
+        if (!ftp) return 5;
+
+        const intensity = avgWatts / ftp;
+
+        if (scheduledIntensity === 'easy' && intensity >= 0.56 && intensity <= 0.75) return 9;
+        if (scheduledIntensity === 'moderate' && intensity >= 0.76 && intensity <= 0.90) return 9;
+        if (scheduledIntensity === 'hard' && intensity >= 0.91) return 9;
+
+        return 5; // Mismatch
+    },
+
+    // UPDATED: Find best matching workout for ROLLING WEEK WITH QUALITY SCORING
+    async findBestWorkoutMatchRolling(activity, appState) {
         if (!appState.programStartDate) return null;
 
         const activityDate = new Date(activity.start_date);
@@ -272,8 +534,8 @@ const StravaConfig = {
             return null; // Rest day or no workout scheduled
         }
 
-        // Check if already completed using ISO date format
-        const historyKey = `${activityWeek}-${activityDate.toISOString().split('T')[0]}`;
+        // Use dayIndex for history key consistency
+        const historyKey = `${activityWeek}-${dayInWeek}`;
         if (appState.history[historyKey]) {
             return null; // Already marked as complete
         }
@@ -328,7 +590,8 @@ const StravaConfig = {
             return null; // Too low confidence
         }
 
-        return {
+        // 🆕 Calculate quality score asynchronously if possible (note: sync version for compatibility)
+        const match = {
             activity: activity,
             workout: scheduledWorkout,
             week: activityWeek,
@@ -342,8 +605,11 @@ const StravaConfig = {
                 durationDiff: durationDiff,
                 activityName: activity.name,
                 workoutName: scheduledWorkout.name
-            }
+            },
+            qualityScore: null // Will be calculated later in sync flow
         };
+
+        return match;
     },
 
     // Sync Activities - Manual trigger
@@ -377,13 +643,28 @@ const StravaConfig = {
             const matches = [];
             const unmatchedActivities = [];
 
-            activities.forEach(activity => {
+            for (const activity of activities) {
                 // Include virtual rides too
-                if (activity.type !== 'Ride' && activity.type !== 'VirtualRide') return;
+                if (activity.type !== 'Ride' && activity.type !== 'VirtualRide') continue;
 
-                const match = this.findBestWorkoutMatchRolling(activity, appState);
+                const match = await this.findBestWorkoutMatchRolling(activity, appState);
 
                 if (match) {
+                    // Calculate quality score if power data available
+                    if (activity.has_power && appState.ftp) {
+                        try {
+                            const qualityScore = await this.analyzeWorkoutQuality(
+                                match.activity,
+                                match.workout,
+                                appState.ftp
+                            );
+                            match.qualityScore = qualityScore;
+                            console.log(`✅ Quality score for ${match.activity.name}: ${qualityScore.total}/10`);
+                        } catch (error) {
+                            console.warn(`⚠️ Failed to calculate quality score:`, error);
+                            match.qualityScore = null;
+                        }
+                    }
                     matches.push(match);
                 } else {
                     // Only show unmatched if within program dates
@@ -392,13 +673,16 @@ const StravaConfig = {
                         unmatchedActivities.push(activity);
                     }
                 }
-            });
+            }
 
             console.log(`📊 Sync Results:`, {
                 total: activities.length,
                 matched: matches.length,
                 unmatched: unmatchedActivities.length
             });
+
+            // Store matches for confirmSyncMatches to access
+            this.currentSyncMatches = matches;
 
             // Show sync results modal
             if (matches.length > 0 || unmatchedActivities.length > 0) {
@@ -467,19 +751,39 @@ const StravaConfig = {
             weekday: 'short',
             month: 'short',
             day: 'numeric'
-        })} • 
+        })} •
                                                 ⏱️ ${match.details.activityDuration} min
                                                 ${match.activity.average_watts ? ` • ⚡ ${Math.round(match.activity.average_watts)}W` : ''}
                                             </div>
                                         </div>
-                                        <span style="background: ${match.confidence > 70 ? '#10b981' : match.confidence > 50 ? '#f59e0b' : '#ef4444'}; 
-                                                     color: white; 
-                                                     padding: 4px 12px; 
-                                                     border-radius: 12px; 
-                                                     font-size: 0.75rem; 
-                                                     font-weight: 600;">
-                                            ${match.confidence}% match
-                                        </span>
+                                        <div style="display: flex; gap: 8px; flex-direction: column; align-items: flex-end;">
+                                            <span style="background: ${match.confidence > 70 ? '#10b981' : match.confidence > 50 ? '#f59e0b' : '#ef4444'};
+                                                         color: white;
+                                                         padding: 4px 12px;
+                                                         border-radius: 12px;
+                                                         font-size: 0.75rem;
+                                                         font-weight: 600;">
+                                                ${match.confidence}% match
+                                            </span>
+                                            ${match.qualityScore ? `
+                                                <span style="background: ${
+                                                    match.qualityScore.total >= 8 ? '#10b981' :
+                                                    match.qualityScore.total >= 6 ? '#f59e0b' :
+                                                    '#ef4444'
+                                                };
+                                                             color: white;
+                                                             padding: 4px 12px;
+                                                             border-radius: 12px;
+                                                             font-size: 0.75rem;
+                                                             font-weight: 600;
+                                                             display: flex;
+                                                             align-items: center;
+                                                             gap: 4px;">
+                                                    <span style="font-size: 0.9rem;">⭐</span>
+                                                    ${match.qualityScore.total}/10 quality
+                                                </span>
+                                            ` : ''}
+                                        </div>
                                     </div>
                                     
                                     <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: white; border-radius: 6px;">
@@ -590,23 +894,65 @@ const StravaConfig = {
         // Get app state
         const appState = StorageModule.loadState();
 
-        // Mark workouts as complete
+        // Initialize workoutScores if not exists
+        if (!appState.workoutScores) {
+            appState.workoutScores = {};
+        }
+
+        // Mark workouts as complete and save quality scores
         let completedCount = 0;
 
         checkboxes.forEach(checkbox => {
             const historyKey = checkbox.dataset.historyKey;
+            const activityId = checkbox.dataset.activityId;
+
+            // Mark as complete
             appState.history[historyKey] = true;
+
+            // Save quality score if available
+            const match = this.currentSyncMatches?.find(m => m.activity.id === activityId);
+            if (match && match.qualityScore) {
+                appState.workoutScores[historyKey] = {
+                    total: match.qualityScore.total,
+                    duration: match.qualityScore.duration,
+                    powerZones: match.qualityScore.powerZones,
+                    completion: match.qualityScore.completion,
+                    activityId: activityId,
+                    syncedAt: new Date().toISOString()
+                };
+                console.log(`💾 Saved quality score for ${historyKey}: ${match.qualityScore.total}/10`);
+            }
+
             completedCount++;
         });
 
         // Save state
         StorageModule.saveState(appState);
 
+        // Sync workout scores to Supabase (async, non-blocking)
+        if (Object.keys(appState.workoutScores).length > 0) {
+            this.syncWorkoutScoresToSupabase(appState.workoutScores).then(result => {
+                if (result.success && result.synced > 0) {
+                    console.log(`✅ Synced ${result.synced} workout scores to Supabase`);
+                }
+            }).catch(error => {
+                console.error('❌ Failed to sync scores to Supabase:', error);
+            });
+        }
+
         // Close modal
         modal.remove();
 
-        // Show success
-        UIModule.showNotification(`✅ ${completedCount} workout${completedCount > 1 ? 's' : ''} marked complete!`);
+        // Show success with quality score info
+        const avgScore = Object.values(appState.workoutScores)
+            .filter(s => s.total)
+            .reduce((sum, s, i, arr) => sum + s.total / arr.length, 0);
+
+        const message = avgScore > 0
+            ? `✅ ${completedCount} workout${completedCount > 1 ? 's' : ''} marked complete! Avg quality: ${avgScore.toFixed(1)}/10`
+            : `✅ ${completedCount} workout${completedCount > 1 ? 's' : ''} marked complete!`;
+
+        UIModule.showNotification(message);
 
         // Refresh UI
         if (window.App?.refreshUI) {
@@ -636,6 +982,150 @@ const StravaConfig = {
                     window.App.refreshUI();
                 }, 500);
             }
+        }
+    },
+
+    // === SUPABASE SYNC FUNCTIONS ===
+
+    // Save workout score to Supabase
+    async saveWorkoutScoreToSupabase(historyKey, scoreData) {
+        const client = SupabaseConfig?.getClient();
+        if (!client) {
+            console.warn('⚠️ Supabase not initialized, skipping score sync');
+            return false;
+        }
+
+        try {
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) {
+                console.warn('⚠️ No user logged in, skipping score sync');
+                return false;
+            }
+
+            const { error } = await client
+                .from('workout_scores')
+                .upsert({
+                    user_id: user.id,
+                    history_key: historyKey,
+                    activity_id: scoreData.activityId,
+                    total_score: scoreData.total,
+                    duration_score: scoreData.duration,
+                    power_zones_score: scoreData.powerZones,
+                    completion_score: scoreData.completion,
+                    synced_at: scoreData.syncedAt || new Date().toISOString()
+                }, {
+                    onConflict: 'user_id,history_key'
+                });
+
+            if (error) {
+                console.error('❌ Failed to save workout score to Supabase:', error);
+                return false;
+            }
+
+            console.log(`✅ Workout score saved to Supabase: ${historyKey}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error saving workout score to Supabase:', error);
+            return false;
+        }
+    },
+
+    // Batch sync all workout scores to Supabase
+    async syncWorkoutScoresToSupabase(workoutScores) {
+        const client = SupabaseConfig?.getClient();
+        if (!client) {
+            console.warn('⚠️ Supabase not initialized, skipping scores sync');
+            return { success: false, synced: 0 };
+        }
+
+        try {
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) {
+                console.warn('⚠️ No user logged in, skipping scores sync');
+                return { success: false, synced: 0 };
+            }
+
+            const records = Object.entries(workoutScores).map(([historyKey, scoreData]) => ({
+                user_id: user.id,
+                history_key: historyKey,
+                activity_id: scoreData.activityId,
+                total_score: scoreData.total,
+                duration_score: scoreData.duration,
+                power_zones_score: scoreData.powerZones,
+                completion_score: scoreData.completion,
+                synced_at: scoreData.syncedAt || new Date().toISOString()
+            }));
+
+            if (records.length === 0) {
+                return { success: true, synced: 0 };
+            }
+
+            const { error } = await client
+                .from('workout_scores')
+                .upsert(records, {
+                    onConflict: 'user_id,history_key'
+                });
+
+            if (error) {
+                console.error('❌ Failed to sync workout scores to Supabase:', error);
+                return { success: false, synced: 0 };
+            }
+
+            console.log(`✅ Synced ${records.length} workout scores to Supabase`);
+            return { success: true, synced: records.length };
+
+        } catch (error) {
+            console.error('❌ Error syncing workout scores to Supabase:', error);
+            return { success: false, synced: 0 };
+        }
+    },
+
+    // Fetch workout scores from Supabase
+    async fetchWorkoutScoresFromSupabase() {
+        const client = SupabaseConfig?.getClient();
+        if (!client) {
+            console.warn('⚠️ Supabase not initialized, skipping scores fetch');
+            return null;
+        }
+
+        try {
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) {
+                console.warn('⚠️ No user logged in, skipping scores fetch');
+                return null;
+            }
+
+            const { data, error } = await client
+                .from('workout_scores')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('synced_at', { ascending: false });
+
+            if (error) {
+                console.error('❌ Failed to fetch workout scores from Supabase:', error);
+                return null;
+            }
+
+            // Convert to the same format as localStorage
+            const workoutScores = {};
+            data.forEach(record => {
+                workoutScores[record.history_key] = {
+                    total: record.total_score,
+                    duration: record.duration_score,
+                    powerZones: record.power_zones_score,
+                    completion: record.completion_score,
+                    activityId: record.activity_id,
+                    syncedAt: record.synced_at
+                };
+            });
+
+            console.log(`✅ Fetched ${data.length} workout scores from Supabase`);
+            return workoutScores;
+
+        } catch (error) {
+            console.error('❌ Error fetching workout scores from Supabase:', error);
+            return null;
         }
     }
 };
