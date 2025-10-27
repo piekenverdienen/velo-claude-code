@@ -691,7 +691,10 @@ const App = (function () {
             showMainApp();
         },
 
-        // Navigation
+        /**
+         * Switch between application tabs
+         * @param {string} tabName - Tab to switch to ('today', 'week', 'progress', 'cyclingclub', 'settings')
+         */
         switchTab: function (tabName) {
             UIModule.switchTab(tabName);
 
@@ -714,6 +717,10 @@ const App = (function () {
             }
         },
 
+        /**
+         * Navigate to previous or next week
+         * @param {number} direction - Direction to navigate (-1 for previous, +1 for next)
+         */
         changeWeek: function (direction) {
             const newWeek = appState.currentWeek + direction;
             if (newWeek >= 1 && newWeek <= APP_CONFIG.weeks.total) {
@@ -725,7 +732,10 @@ const App = (function () {
             }
         },
 
-        // Jump to the current week in Week view
+        /**
+         * Jump to the current week based on program start date
+         * Automatically calculates which week user is in and navigates to it
+         */
         jumpToCurrentWeek: function () {
             const actualWeek = calculateCurrentWeek();
             appState.currentWeek = actualWeek;
@@ -735,7 +745,11 @@ const App = (function () {
             updateStats();
         },
 
-        // Workout methods
+        /**
+         * Mark a workout as completed
+         * @param {number|string} day - Day index (0-6) or day name ('Mon'-'Sun')
+         * @param {number} [week] - Week number, defaults to current week
+         */
         completeWorkout: function (day, week) {
             // Convert day to dayIndex if it's a day name (Mon, Tue, etc.)
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -804,6 +818,10 @@ const App = (function () {
             }
         },
 
+        /**
+         * View detailed workout information for a specific day
+         * @param {string|number} day - Day name ('Mon'-'Sun') or index (0-6)
+         */
         viewWorkoutDetails: function (day) {
             UIModule.switchTab('today');
 
@@ -850,6 +868,11 @@ const App = (function () {
             `;
         },
 
+        /**
+         * Download workout as Zwift .ZWO file
+         * @param {string|number} day - Day name ('Mon'-'Sun') or index (0-6)
+         * @param {number} [week] - Week number, defaults to current week
+         */
         downloadZwiftWorkout: function (day, week) {
             // Convert dayIndex to day name if needed
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
