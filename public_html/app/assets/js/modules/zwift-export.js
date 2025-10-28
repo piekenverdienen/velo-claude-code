@@ -107,15 +107,39 @@ const ZwiftExport = (function () {
     // Determine power for workout type
     function getPowerForWorkout(workoutType, intensity) {
         const mapping = {
-            'vo2max': { on: POWER_ZONES.vo2max.low + 0.08, off: POWER_ZONES.easy.high },
-            'threshold': { on: 0.875, off: POWER_ZONES.easy.high }, // 87.5% = middle of 85-90% range
-            'sweetspot': { on: 0.90, off: POWER_ZONES.easy.high },
-            'tempo': { on: POWER_ZONES.moderate.low + 0.05, off: POWER_ZONES.easy.high },
-            'sprint': { on: POWER_ZONES.anaerobic.low, off: POWER_ZONES.recovery.high },
-            'default': { on: POWER_ZONES.threshold.high, off: POWER_ZONES.easy.high }
+            'vo2max': { on: POWER_ZONES.vo2max.low + 0.08, off: 0.55 }, // Recovery at 55%
+            'threshold': { on: 0.875, off: 0.55 }, // 87.5% = middle of 85-90% range, recovery 55%
+            'sweetspot': { on: 0.90, off: 0.55 }, // Recovery at 55%
+            'tempo': { on: POWER_ZONES.moderate.low + 0.05, off: 0.55 }, // Recovery at 55%
+            'sprint': { on: POWER_ZONES.anaerobic.low, off: 0.50 }, // Very low recovery for sprints
+            'default': { on: POWER_ZONES.threshold.high, off: 0.55 }
         };
 
         return mapping[workoutType] || mapping.default;
+    }
+
+    /**
+     * Generate structured warmup protocol
+     * Hard workouts: 10 min structured warmup
+     * Easy/Moderate: 5 min simple ramp
+     * @param {string} intensity - Workout intensity level
+     * @returns {string} XML warmup segments
+     */
+    function generateStructuredWarmup(intensity) {
+        if (intensity === 'hard') {
+            // 10-minute structured warmup for intense workouts
+            return `        <!-- Structured Warmup: 10 minutes -->
+        <SteadyState Duration="120" Power="0.50" pace="0"/>
+        <SteadyState Duration="120" Power="0.60" pace="0"/>
+        <SteadyState Duration="120" Power="0.70" pace="0"/>
+        <SteadyState Duration="60" Power="0.80" pace="0"/>
+        <SteadyState Duration="60" Power="0.50" pace="0"/>
+        <SteadyState Duration="120" Power="0.75" pace="0"/>
+`;
+        } else {
+            // 5-minute simple ramp for easy/moderate workouts
+            return `        <Warmup Duration="300" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
+        }
     }
 
     /**
@@ -137,8 +161,8 @@ const ZwiftExport = (function () {
         const cooldownDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
         const mainDuration = totalDuration - warmupDuration - cooldownDuration;
 
-        // 2. Warmup
-        segments += `        <Warmup Duration="${warmupDuration}" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
+        // 2. Structured Warmup
+        segments += generateStructuredWarmup(intensity);
 
         // 3. Main workout - FIXED to respect total duration
         if (structure.type === 'intervals' && mainDuration > 0) {
@@ -228,7 +252,7 @@ const ZwiftExport = (function () {
         const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workout_file>
     <author>${author}</author>
-    <n>${name}</n>
+    <name>${name}</name>
     <description>${escapeXML(workout.description || 'Polarized training workout')}</description>
     <sportType>bike</sportType>
     <tags>
