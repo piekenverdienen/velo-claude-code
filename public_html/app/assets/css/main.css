@@ -117,7 +117,7 @@
     /* Surface Colors - Subtle highlights */
     --surface: rgba(124, 58, 237, 0.04);
     --surface-hover: rgba(124, 58, 237, 0.08);
-    --surface-glass: rgba(255, 255, 255, 0.8);
+    --surface-glass: rgba(255, 255, 255, 0.9);
 
     /* Border Colors - Defined but subtle */
     --border-subtle: rgba(124, 58, 237, 0.08);
@@ -153,6 +153,43 @@
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
     --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.15);
+}
+
+/* Light mode specific overrides for form inputs */
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] input[type="tel"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="password"],
+[data-theme="light"] textarea {
+    background: #F3F4F6 !important;
+    color: #111827 !important;
+    border-color: rgba(124, 58, 237, 0.15) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+    color: #6B7280 !important;
+    opacity: 0.7;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+    background: #FFFFFF !important;
+    color: #111827 !important;
+}
+
+/* Light mode notification text fix */
+[data-theme="light"] .notification {
+    background: rgba(255, 255, 255, 0.95);
+    color: #111827 !important;
+    border: 2px solid var(--border-bright);
+}
+
+/* Light mode info messages */
+[data-theme="light"] .info-box p,
+[data-theme="light"] .no-deals-message p {
+    color: #4B5563 !important;
 }
 
 /* ============================================

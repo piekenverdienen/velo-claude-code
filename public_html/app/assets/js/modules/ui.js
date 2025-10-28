@@ -1010,9 +1010,20 @@ const UIModule = (function () {
         // =====================================================
 
         renderWorkoutGraph: function (workout) {
-            if (!workout || !workout.details) return '';
+            if (!workout) return '';
 
-            const phases = this.parseWorkoutPhasesAdvanced(workout);
+            // Try parsing with details if available
+            let phases = [];
+            if (workout.details) {
+                phases = this.parseWorkoutPhasesAdvanced(workout);
+            }
+
+            // Fallback: Create simple graph if no phases generated
+            if (!phases || phases.length === 0) {
+                phases = this.createSimpleWorkoutGraph(workout);
+            }
+
+            // Still no phases? Return empty
             if (!phases || phases.length === 0) return '';
 
             const totalDuration = phases.reduce((sum, phase) => sum + phase.duration, 0);
@@ -1024,7 +1035,7 @@ const UIModule = (function () {
                 const zoneClass = this.getZoneClass(phase.intensity);
 
                 barsHTML += `
-                    <div class="graph-bar ${zoneClass}" 
+                    <div class="graph-bar ${zoneClass}"
                          style="width: ${widthPercent}%; height: ${heightPercent}%;"
                          title="${phase.name}: ${phase.duration}min @ ${Math.round(phase.intensity * 100)}% FTP">
                     </div>
@@ -1033,7 +1044,7 @@ const UIModule = (function () {
 
             return `
                 <div class="workout-graph-container">
-                    <h4 style="color: white; margin-bottom: 15px;">⚡ Workout Profile</h4>
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">⚡ Workout Profile</h4>
                     <div class="workout-graph">
                         ${barsHTML}
                     </div>
@@ -1044,6 +1055,51 @@ const UIModule = (function () {
                     </div>
                 </div>
             `;
+        },
+
+        /**
+         * Create simple workout graph for workouts without details
+         * @param {Object} workout - Workout object
+         * @returns {Array<Object>} Simple phases array
+         */
+        createSimpleWorkoutGraph: function(workout) {
+            const phases = [];
+            const duration = workout.duration || 60;
+            const intensity = this.getIntensityValue(workout);
+
+            // Simple structure: warmup + main + cooldown
+            const warmupDuration = duration >= 60 ? 15 : 10;
+            const cooldownDuration = duration >= 60 ? 10 : 5;
+            const mainDuration = duration - warmupDuration - cooldownDuration;
+
+            if (warmupDuration > 0) {
+                phases.push({
+                    name: 'Warm-up',
+                    duration: warmupDuration,
+                    intensity: 0.55,
+                    type: 'warmup'
+                });
+            }
+
+            if (mainDuration > 0) {
+                phases.push({
+                    name: 'Main Set',
+                    duration: mainDuration,
+                    intensity: intensity,
+                    type: 'main'
+                });
+            }
+
+            if (cooldownDuration > 0) {
+                phases.push({
+                    name: 'Cool-down',
+                    duration: cooldownDuration,
+                    intensity: 0.50,
+                    type: 'cooldown'
+                });
+            }
+
+            return phases;
         },
 
         /**
