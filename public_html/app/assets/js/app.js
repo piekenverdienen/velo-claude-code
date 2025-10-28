@@ -64,13 +64,18 @@ const App = (function () {
 
         // Wait for required modules to load
         let attempts = 0;
-        while (!window.StorageModule && attempts < 50) {
+        while ((!window.StorageModule || !window.UIModule) && attempts < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
 
         if (!window.StorageModule) {
             console.error('StorageModule failed to load');
+            return;
+        }
+
+        if (!window.UIModule) {
+            console.error('UIModule failed to load');
             return;
         }
 
