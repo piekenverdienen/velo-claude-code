@@ -93,61 +93,61 @@ const ThemeModule = (function () {
         } else {
             setupToggleButton();
         }
+
+        // Also update button whenever Settings tab is opened
+        // Use MutationObserver to detect when Settings tab becomes visible
+        observeSettingsTab();
     }
 
     /**
      * Set up theme toggle button in settings
+     * Called when DOM is ready or Settings tab is opened
      */
     function setupToggleButton() {
-        // Create toggle button HTML if settings container exists
-        const settingsContent = document.getElementById('settingsContent');
-        if (settingsContent) {
-            insertToggleButton();
-        }
-
-        // Add click handler
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
             updateToggleButton(getCurrentTheme());
         }
     }
 
     /**
-     * Insert theme toggle button into settings
+     * Observe when Settings tab becomes visible
+     * Updates theme toggle button when user opens Settings
      */
-    function insertToggleButton() {
-        const settingsContent = document.getElementById('settingsContent');
-        if (!settingsContent) return;
+    function observeSettingsTab() {
+        // Wait for DOM to be ready
+        const checkAndObserve = () => {
+            const settingsTab = document.getElementById('settingsTab');
+            if (!settingsTab) {
+                // Retry after a short delay
+                setTimeout(checkAndObserve, 100);
+                return;
+            }
 
-        // Check if button already exists
-        if (document.getElementById('themeToggle')) return;
+            // Create observer to watch for visibility changes
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const isVisible = !settingsTab.classList.contains('hidden');
+                        if (isVisible) {
+                            setupToggleButton();
+                        }
+                    }
+                });
+            });
 
-        // Find the settings section
-        const settingsSection = settingsContent.querySelector('.settings-section');
-        if (!settingsSection) return;
+            // Start observing
+            observer.observe(settingsTab, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        };
 
-        // Create theme toggle HTML
-        const themeToggleHTML = `
-            <div class="setting-item" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-                <div class="setting-header">
-                    <h3>🎨 Appearance</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 4px;">
-                        Customize the look and feel
-                    </p>
-                </div>
-                <button id="themeToggle"
-                        class="btn btn-secondary"
-                        style="width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                        aria-label="Toggle theme">
-                    <span class="theme-icon" style="font-size: 1.25rem;">☀️</span>
-                    <span class="theme-label">Light Mode</span>
-                </button>
-            </div>
-        `;
-
-        // Insert at the end of settings section
-        settingsSection.insertAdjacentHTML('beforeend', themeToggleHTML);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAndObserve);
+        } else {
+            checkAndObserve();
+        }
     }
 
     // Public API

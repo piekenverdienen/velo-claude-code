@@ -806,28 +806,54 @@ const UIModule = (function () {
                             </div>
                         </div>
                         
+                        <!-- Appearance Section -->
+                        <div class="settings-section" style="margin-top: 40px;">
+                            <h3 class="settings-section-title">🎨 Appearance</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                                Customize the look and feel of your training app.
+                            </p>
+
+                            <button id="themeToggle"
+                                    class="btn btn-secondary"
+                                    style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px;"
+                                    onclick="if(typeof ThemeModule !== 'undefined') ThemeModule.toggleTheme()"
+                                    aria-label="Toggle theme">
+                                <span class="theme-icon" style="font-size: 1.5rem;">☀️</span>
+                                <span class="theme-label" style="font-size: 1rem; font-weight: 600;">Light Mode</span>
+                            </button>
+
+                            <div style="margin-top: 12px; padding: 12px;
+                                        background: var(--surface);
+                                        border: 1px solid var(--border-subtle);
+                                        border-radius: 8px;
+                                        font-size: 0.875rem;
+                                        color: var(--text-secondary);">
+                                💡 Your theme preference is saved automatically and will persist across sessions.
+                            </div>
+                        </div>
+
                         <!-- App Management Section -->
                         <div class="settings-section" style="margin-top: 40px;">
                             <h3 class="settings-section-title">⚙️ App Management</h3>
-                            
+
                             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
                                 <button class="btn btn-primary" onclick="App.saveSettings()" style="width: 100%;">
                                     💾 Save All Changes
                                 </button>
-                                
-                                <button class="btn btn-danger" onclick="App.resetApp()" style="width: 100%; 
+
+                                <button class="btn btn-danger" onclick="App.resetApp()" style="width: 100%;
                                         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
                                     🔄 Reset Everything (Danger Zone)
                                 </button>
                             </div>
-                            
-                            <div style="margin-top: 16px; padding: 12px; 
-                                        background: rgba(239, 68, 68, 0.1); 
+
+                            <div style="margin-top: 16px; padding: 12px;
+                                        background: rgba(239, 68, 68, 0.1);
                                         border: 1px solid rgba(239, 68, 68, 0.3);
                                         border-radius: 8px;
                                         font-size: 0.875rem;
                                         color: var(--text-secondary);">
-                                ⚠️ <strong>Warning:</strong> Reset will permanently delete all your training data, 
+                                ⚠️ <strong>Warning:</strong> Reset will permanently delete all your training data,
                                 schedule, and settings. This cannot be undone.
                             </div>
                         </div>
