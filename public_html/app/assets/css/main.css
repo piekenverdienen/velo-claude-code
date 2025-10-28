@@ -12,6 +12,10 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* ============================================
+   THEME SYSTEM - Dark Mode (Default)
+   ============================================ */
+
 :root {
     /* Primary Brand Colors */
     --primary: #8B5CF6;
@@ -86,6 +90,69 @@
     /* Safe Areas */
     --safe-area-inset-top: env(safe-area-inset-top);
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
+}
+
+/* ============================================
+   LIGHT MODE Theme
+   Professional, clean, accessible
+   ============================================ */
+
+[data-theme="light"] {
+    /* Primary Brand Colors - Keep brand identity */
+    --primary: #7C3AED;
+    --primary-dark: #6D28D9;
+    --primary-light: #8B5CF6;
+    --secondary: #2563EB;
+    --secondary-light: #3B82F6;
+    --accent: #059669;
+    --accent-orange: #D97706;
+
+    /* Background Colors - Light and clean */
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F9FAFB;
+    --bg-tertiary: #F3F4F6;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-card-hover: rgba(249, 250, 251, 1);
+
+    /* Surface Colors - Subtle highlights */
+    --surface: rgba(124, 58, 237, 0.04);
+    --surface-hover: rgba(124, 58, 237, 0.08);
+    --surface-glass: rgba(255, 255, 255, 0.8);
+
+    /* Border Colors - Defined but subtle */
+    --border-subtle: rgba(124, 58, 237, 0.08);
+    --border: rgba(124, 58, 237, 0.15);
+    --border-bright: rgba(124, 58, 237, 0.3);
+
+    /* Text Colors - Dark on light */
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+
+    /* Status Colors - Vibrant but accessible */
+    --success: #059669;
+    --danger: #DC2626;
+    --warning: #D97706;
+    --success-bg: rgba(5, 150, 105, 0.1);
+    --warning-bg: rgba(217, 119, 6, 0.1);
+    --error-bg: rgba(220, 38, 38, 0.1);
+
+    /* Legacy compatibility */
+    --accent-light: #DDD6FE;
+    --gray-50: rgba(0, 0, 0, 0.02);
+    --gray-100: rgba(0, 0, 0, 0.05);
+    --gray-200: rgba(0, 0, 0, 0.08);
+    --gray-300: rgba(0, 0, 0, 0.15);
+    --gray-400: rgba(0, 0, 0, 0.25);
+    --gray-500: rgba(0, 0, 0, 0.4);
+
+    /* Shadows - Softer in light mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.15);
 }
 
 /* ============================================
