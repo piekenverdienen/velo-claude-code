@@ -56,7 +56,14 @@ const ScheduleModule = (function () {
         }
     };
 
-    // Helper: Selecteer beste variant op basis van target duration
+    /**
+     * Select best workout variant based on target duration and week
+     * Adjusts target for peak week (3) and recovery week (4)
+     * @param {Object} workout - Workout object with variants
+     * @param {number} targetDuration - Target duration in minutes
+     * @param {number} week - Week number (1-6)
+     * @returns {Object|null} Best matching variant or null if no variants
+     */
     function selectBestVariant(workout, targetDuration, week) {
         if (!workout.variants) {
             console.error('Workout heeft geen variants:', workout);
@@ -87,7 +94,15 @@ const ScheduleModule = (function () {
         return bestVariant;
     }
 
-    // Helper: Bereken workout score voor dag
+    /**
+     * Calculate day score for smart workout placement
+     * Considers user preferences, rest days, and workout intensity
+     * @param {string} day - Day name ('Mon'-'Sun')
+     * @param {Array<string>} scheduledDays - Days already scheduled
+     * @param {Array<string>} preferredDays - User's preferred workout days
+     * @param {string} nextWorkoutIntensity - Intensity of next workout ('easy', 'moderate', 'hard')
+     * @returns {number} Score for day suitability (higher = better)
+     */
     function calculateDayScore(day, scheduledDays, preferredDays, nextWorkoutIntensity) {
         const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const dayIndex = allDays.indexOf(day);
@@ -157,7 +172,14 @@ const ScheduleModule = (function () {
     }
 
     return {
-        // Genereer volledig 6-weeks schema
+        /**
+         * Generate complete 6-week training schedule
+         * Uses smart day scoring, variant selection, and 80/20 polarized training principle
+         * @param {string} goal - Training goal ('endurance', 'power', 'climbing', 'century')
+         * @param {string} timeCommitment - Time commitment level ('starter', 'regular', 'serious')
+         * @param {Array<string>} preferredDays - User's preferred workout days
+         * @returns {Object} 6-week schedule object keyed by week number and day name
+         */
         generateSchedule: function (goal, timeCommitment, preferredDays) {
             const schedule = {};
             const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

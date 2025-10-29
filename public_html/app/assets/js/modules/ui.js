@@ -806,28 +806,54 @@ const UIModule = (function () {
                             </div>
                         </div>
                         
+                        <!-- Appearance Section -->
+                        <div class="settings-section" style="margin-top: 40px;">
+                            <h3 class="settings-section-title">🎨 Appearance</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                                Customize the look and feel of your training app.
+                            </p>
+
+                            <button id="themeToggle"
+                                    class="btn btn-secondary"
+                                    style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px;"
+                                    onclick="if(typeof ThemeModule !== 'undefined') ThemeModule.toggleTheme()"
+                                    aria-label="Toggle theme">
+                                <span class="theme-icon" style="font-size: 1.5rem;">☀️</span>
+                                <span class="theme-label" style="font-size: 1rem; font-weight: 600;">Light Mode</span>
+                            </button>
+
+                            <div style="margin-top: 12px; padding: 12px;
+                                        background: var(--surface);
+                                        border: 1px solid var(--border-subtle);
+                                        border-radius: 8px;
+                                        font-size: 0.875rem;
+                                        color: var(--text-secondary);">
+                                💡 Your theme preference is saved automatically and will persist across sessions.
+                            </div>
+                        </div>
+
                         <!-- App Management Section -->
                         <div class="settings-section" style="margin-top: 40px;">
                             <h3 class="settings-section-title">⚙️ App Management</h3>
-                            
+
                             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
                                 <button class="btn btn-primary" onclick="App.saveSettings()" style="width: 100%;">
                                     💾 Save All Changes
                                 </button>
-                                
-                                <button class="btn btn-danger" onclick="App.resetApp()" style="width: 100%; 
+
+                                <button class="btn btn-danger" onclick="App.resetApp()" style="width: 100%;
                                         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
                                     🔄 Reset Everything (Danger Zone)
                                 </button>
                             </div>
-                            
-                            <div style="margin-top: 16px; padding: 12px; 
-                                        background: rgba(239, 68, 68, 0.1); 
+
+                            <div style="margin-top: 16px; padding: 12px;
+                                        background: rgba(239, 68, 68, 0.1);
                                         border: 1px solid rgba(239, 68, 68, 0.3);
                                         border-radius: 8px;
                                         font-size: 0.875rem;
                                         color: var(--text-secondary);">
-                                ⚠️ <strong>Warning:</strong> Reset will permanently delete all your training data, 
+                                ⚠️ <strong>Warning:</strong> Reset will permanently delete all your training data,
                                 schedule, and settings. This cannot be undone.
                             </div>
                         </div>
@@ -984,9 +1010,20 @@ const UIModule = (function () {
         // =====================================================
 
         renderWorkoutGraph: function (workout) {
-            if (!workout || !workout.details) return '';
+            if (!workout) return '';
 
-            const phases = this.parseWorkoutPhasesAdvanced(workout);
+            // Try parsing with details if available
+            let phases = [];
+            if (workout.details) {
+                phases = this.parseWorkoutPhasesAdvanced(workout);
+            }
+
+            // Fallback: Create simple graph if no phases generated
+            if (!phases || phases.length === 0) {
+                phases = this.createSimpleWorkoutGraph(workout);
+            }
+
+            // Still no phases? Return empty
             if (!phases || phases.length === 0) return '';
 
             const totalDuration = phases.reduce((sum, phase) => sum + phase.duration, 0);
@@ -998,7 +1035,7 @@ const UIModule = (function () {
                 const zoneClass = this.getZoneClass(phase.intensity);
 
                 barsHTML += `
-                    <div class="graph-bar ${zoneClass}" 
+                    <div class="graph-bar ${zoneClass}"
                          style="width: ${widthPercent}%; height: ${heightPercent}%;"
                          title="${phase.name}: ${phase.duration}min @ ${Math.round(phase.intensity * 100)}% FTP">
                     </div>
@@ -1007,7 +1044,7 @@ const UIModule = (function () {
 
             return `
                 <div class="workout-graph-container">
-                    <h4 style="color: white; margin-bottom: 15px;">⚡ Workout Profile</h4>
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">⚡ Workout Profile</h4>
                     <div class="workout-graph">
                         ${barsHTML}
                     </div>
@@ -1020,16 +1057,80 @@ const UIModule = (function () {
             `;
         },
 
+        /**
+         * Create simple workout graph for workouts without details
+         * @param {Object} workout - Workout object
+         * @returns {Array<Object>} Simple phases array
+         */
+        createSimpleWorkoutGraph: function(workout) {
+            const phases = [];
+            const duration = workout.duration || 60;
+            const intensity = this.getIntensityValue(workout);
+
+            // Simple structure: warmup + main + cooldown
+            const warmupDuration = duration >= 60 ? 15 : 10;
+            const cooldownDuration = duration >= 60 ? 10 : 5;
+            const mainDuration = duration - warmupDuration - cooldownDuration;
+
+            if (warmupDuration > 0) {
+                phases.push({
+                    name: 'Warm-up',
+                    duration: warmupDuration,
+                    intensity: 0.55,
+                    type: 'warmup'
+                });
+            }
+
+            if (mainDuration > 0) {
+                phases.push({
+                    name: 'Main Set',
+                    duration: mainDuration,
+                    intensity: intensity,
+                    type: 'main'
+                });
+            }
+
+            if (cooldownDuration > 0) {
+                phases.push({
+                    name: 'Cool-down',
+                    duration: cooldownDuration,
+                    intensity: 0.50,
+                    type: 'cooldown'
+                });
+            }
+
+            return phases;
+        },
+
+        /**
+         * Parse workout details into visualization phases
+         * Supports: minutes, seconds, various interval patterns, warmup/cooldown
+         * @param {Object} workout - Workout object with details and duration
+         * @returns {Array<Object>} Array of workout phases with duration, intensity, type
+         */
         parseWorkoutPhasesAdvanced: function (workout) {
             const phases = [];
             const details = workout.details || '';
             const intensity = workout.intensity || 'easy';
 
+            // HELPER: Convert time strings to minutes
+            const parseTime = (value, unit) => {
+                const num = parseFloat(value);
+                if (unit.match(/^s(ec)?(ond)?s?$/i)) {
+                    return num / 60; // Convert seconds to minutes
+                }
+                return num; // Already minutes
+            };
+
             // PARSE VERSCHILLENDE INTERVAL PATTERNS
-            const intervalMatch = details.match(/(\d+)x(\d+)\s*min\s*(?:@|at)\s*(?:(\d+)(?:-(\d+))?%?\s*)?(?:FTP)?/i);
-            const warmupMatch = details.match(/Warm-up:\s*(\d+)\s*min/i);
-            const cooldownMatch = details.match(/Cool-down:\s*(\d+)\s*min/i);
-            const recoveryMatch = details.match(/(\d+)\s*min\s*(?:easy|recovery)/i);
+            // Match: "10x30 seconds", "5x3 min", "4x4min at 90%", "3x8 min @ 80-85% FTP"
+            const intervalMatch = details.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:@|at)?\s*(?:(\d+)(?:-(\d+))?%?\s*)?(?:FTP|all-out)?/i);
+
+            const warmupMatch = details.match(/Warm-up:\s*(\d+)\s*(min|minutes)/i);
+            const cooldownMatch = details.match(/Cool-down:\s*(\d+)\s*(min|minutes)/i);
+
+            // Match: "3 min recovery", "4min easy", "30s rest", "2 minute recovery"
+            const recoveryMatch = details.match(/(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:easy|recovery|rest)/i);
 
             // 1. WARMUP FASE
             let warmupDuration = 0;
@@ -1043,29 +1144,54 @@ const UIModule = (function () {
                 });
             }
 
-            // 2. MAIN SET - Check of er intervals zijn
+            // 2. COOLDOWN FASE (parse now for duration calculation)
+            let cooldownDuration = 0;
+            if (cooldownMatch) {
+                cooldownDuration = parseInt(cooldownMatch[1]);
+            }
+
+            // 3. MAIN SET - Check of er intervals zijn
             if (intervalMatch && intervalMatch[1] && intervalMatch[2]) {
                 const reps = parseInt(intervalMatch[1]);
-                const duration = parseInt(intervalMatch[2]);
+                const workDurationRaw = intervalMatch[2];
+                const workUnit = intervalMatch[3];
+                const workDuration = parseTime(workDurationRaw, workUnit);
 
                 // Bepaal intensiteit van de intervals
                 let avgIntensity;
-                if (intervalMatch[3]) {
-                    const intensityLow = parseInt(intervalMatch[3]) / 100;
-                    const intensityHigh = intervalMatch[4] ? parseInt(intervalMatch[4]) / 100 : intensityLow;
+                if (intervalMatch[4]) {
+                    const intensityLow = parseInt(intervalMatch[4]) / 100;
+                    const intensityHigh = intervalMatch[5] ? parseInt(intervalMatch[5]) / 100 : intensityLow;
                     avgIntensity = (intensityLow + intensityHigh) / 2;
+                } else if (details.toLowerCase().includes('all-out') || details.toLowerCase().includes('sprint')) {
+                    avgIntensity = 1.5; // Anaerobic/sprint zone
                 } else {
                     avgIntensity = this.getIntensityValue(workout);
                 }
 
                 // Recovery tijd
-                const recoveryTime = recoveryMatch ? parseInt(recoveryMatch[1]) : 3;
+                let recoveryTime = 3; // Default 3 min
+                if (recoveryMatch) {
+                    recoveryTime = parseTime(recoveryMatch[1], recoveryMatch[2]);
+                }
+
+                // Calculate total time needed for intervals
+                const intervalTotalTime = reps * workDuration + (reps - 1) * recoveryTime;
+                const availableTime = (workout.duration || 60) - warmupDuration - cooldownDuration;
+
+                // If intervals would exceed available time, adjust recovery
+                let adjustedRecoveryTime = recoveryTime;
+                if (intervalTotalTime > availableTime && reps > 1) {
+                    const totalWorkTime = reps * workDuration;
+                    const totalRecoveryTime = availableTime - totalWorkTime;
+                    adjustedRecoveryTime = Math.max(0.5, totalRecoveryTime / (reps - 1)); // Min 30s recovery
+                }
 
                 // Bouw alle intervals
                 for (let i = 0; i < reps; i++) {
                     phases.push({
                         name: `Interval ${i + 1}`,
-                        duration: duration,
+                        duration: workDuration,
                         intensity: avgIntensity,
                         type: 'work'
                     });
@@ -1073,7 +1199,7 @@ const UIModule = (function () {
                     if (i < reps - 1) {
                         phases.push({
                             name: 'Recovery',
-                            duration: recoveryTime,
+                            duration: adjustedRecoveryTime,
                             intensity: 0.55,
                             type: 'recovery'
                         });
@@ -1082,7 +1208,6 @@ const UIModule = (function () {
 
             } else {
                 // GEEN INTERVALS - Steady State workout
-                const cooldownDuration = cooldownMatch ? parseInt(cooldownMatch[1]) : 0;
                 const mainDuration = Math.max(
                     (workout.duration || 60) - warmupDuration - cooldownDuration,
                     20
@@ -1120,9 +1245,8 @@ const UIModule = (function () {
                 }
             }
 
-            // 3. COOLDOWN FASE
+            // 4. COOLDOWN FASE
             if (cooldownMatch) {
-                const cooldownDuration = parseInt(cooldownMatch[1]);
                 phases.push({
                     name: 'Cool-down',
                     duration: cooldownDuration,
@@ -1134,8 +1258,14 @@ const UIModule = (function () {
             return phases;
         },
 
+        /**
+         * Get intensity value for workout graph visualization
+         * Parses powerZone, intensity field (as percentage), or falls back to intensity category
+         * @param {Object} workout - Workout object
+         * @returns {number} Intensity as decimal (0.0-1.0)
+         */
         getIntensityValue: function (workout) {
-            // Probeer eerst powerZone als het een percentage is
+            // 1. Try powerZone field if it's a percentage
             if (workout.powerZone && typeof workout.powerZone === 'string') {
                 const match = workout.powerZone.match(/(\d+)(?:-(\d+))?%/);
                 if (match) {
@@ -1145,11 +1275,22 @@ const UIModule = (function () {
                 }
             }
 
-            // Fallback op intensity categorie
+            // 2. Try intensity field if it's a percentage (e.g., "55% FTP", "80-85% FTP")
+            if (workout.intensity && typeof workout.intensity === 'string') {
+                const match = workout.intensity.match(/(\d+)(?:-(\d+))?%/);
+                if (match) {
+                    const low = parseInt(match[1]) / 100;
+                    const high = match[2] ? parseInt(match[2]) / 100 : low;
+                    return (low + high) / 2;
+                }
+            }
+
+            // 3. Fallback to intensity category
             const intensityMap = {
                 'easy': 0.65,
                 'moderate': 0.82,
-                'hard': 0.95
+                'hard': 0.95,
+                'rest': 0.50
             };
 
             return intensityMap[workout.intensity] || 0.70;
@@ -1161,6 +1302,130 @@ const UIModule = (function () {
             if (intensity <= 0.90) return 'zone-3';
             if (intensity <= 1.05) return 'zone-4';
             return 'zone-5';
+        },
+
+        /**
+         * Show loading spinner overlay
+         * @param {string} message - Loading message to display
+         * @param {string} [submessage] - Optional secondary message
+         */
+        showLoading: function (message = 'Loading...', submessage = '') {
+            // Remove existing spinner if present
+            this.hideLoading();
+
+            const spinner = document.createElement('div');
+            spinner.id = 'global-loading-spinner';
+            spinner.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="loading-spinner-container">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-message">${message}</p>
+                        ${submessage ? `<p class="loading-submessage">${submessage}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(spinner);
+
+            // Add CSS if not already present
+            if (!document.getElementById('loading-spinner-styles')) {
+                const style = document.createElement('style');
+                style.id = 'loading-spinner-styles';
+                style.textContent = `
+                    .loading-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.75);
+                        backdrop-filter: blur(4px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 10000;
+                        animation: fadeIn 0.2s ease-in;
+                    }
+
+                    .loading-spinner-container {
+                        background: var(--card-bg, #1f2937);
+                        padding: 40px 60px;
+                        border-radius: 16px;
+                        text-align: center;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(168, 85, 247, 0.2);
+                    }
+
+                    .loading-spinner {
+                        border: 4px solid rgba(168, 85, 247, 0.1);
+                        border-top-color: #a855f7;
+                        border-radius: 50%;
+                        width: 50px;
+                        height: 50px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 20px;
+                    }
+
+                    .loading-message {
+                        color: var(--text-primary, #ffffff);
+                        font-size: 1.125rem;
+                        font-weight: 600;
+                        margin: 0 0 8px 0;
+                    }
+
+                    .loading-submessage {
+                        color: var(--text-secondary, #9ca3af);
+                        font-size: 0.875rem;
+                        margin: 0;
+                    }
+
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        },
+
+        /**
+         * Update loading spinner message
+         * @param {string} message - New loading message
+         * @param {string} [submessage] - Optional secondary message
+         */
+        updateLoading: function (message, submessage = '') {
+            const spinner = document.getElementById('global-loading-spinner');
+            if (spinner) {
+                const messageEl = spinner.querySelector('.loading-message');
+                const submessageEl = spinner.querySelector('.loading-submessage');
+
+                if (messageEl) messageEl.textContent = message;
+
+                if (submessage) {
+                    if (submessageEl) {
+                        submessageEl.textContent = submessage;
+                    } else {
+                        const newSubmessage = document.createElement('p');
+                        newSubmessage.className = 'loading-submessage';
+                        newSubmessage.textContent = submessage;
+                        messageEl.parentNode.appendChild(newSubmessage);
+                    }
+                }
+            }
+        },
+
+        /**
+         * Hide loading spinner
+         */
+        hideLoading: function () {
+            const spinner = document.getElementById('global-loading-spinner');
+            if (spinner) {
+                spinner.style.animation = 'fadeOut 0.2s ease-out';
+                setTimeout(() => spinner.remove(), 200);
+            }
         }
     };
 })();

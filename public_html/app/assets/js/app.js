@@ -64,13 +64,18 @@ const App = (function () {
 
         // Wait for required modules to load
         let attempts = 0;
-        while (!window.StorageModule && attempts < 50) {
+        while ((!window.StorageModule || !window.UIModule) && attempts < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
 
         if (!window.StorageModule) {
             console.error('StorageModule failed to load');
+            return;
+        }
+
+        if (!window.UIModule) {
+            console.error('UIModule failed to load');
             return;
         }
 
@@ -472,8 +477,9 @@ const App = (function () {
                     </div>
                 `;
             } else {
-                const intensityConfig = APP_CONFIG.intensityConfig[workout.intensity || 'easy'];
+                const intensityConfig = APP_CONFIG.intensityConfig[workout.intensity || 'easy'] || APP_CONFIG.intensityConfig.easy;
                 const rpeData = appState.rpeHistory?.find(r => r.workoutKey === historyKey);
+                const qualityScore = appState.workoutScores?.[historyKey];
                 const duration = workout.duration || 60;
                 const hours = duration >= 60 ? Math.floor(duration / 60) : 0;
                 const mins = duration % 60;
@@ -491,12 +497,13 @@ const App = (function () {
                             </span>
                         </div>
                         <div class="workout-badges" style="margin-top: 12px;">
-                            ${WorkoutModule.getIntensityBadge(workout.intensity)}
+                            ${WorkoutModule.getIntensityBadge(workout.intensity || 'easy')}
                             ${isCompleted ? '<span class="badge badge-easy">✅ Done</span>' : ''}
                             ${rpeData ? `<span class="badge" style="background: #10b981;">RPE: ${rpeData.rpe}</span>` : ''}
+                            ${qualityScore ? `<span class="badge" style="background: ${qualityScore.total >= 8 ? '#10b981' : qualityScore.total >= 6 ? '#f59e0b' : '#ef4444'};">⭐ ${qualityScore.total}/10</span>` : ''}
                             ${workout.adapted ? '<span class="badge" style="background: #6366f1;">⚡ Adapted</span>' : ''}
                         </div>
-                        <p class="workout-description">${intensityConfig.description}</p>
+                        <p class="workout-description">${workout.description || intensityConfig.description}</p>
                         <div class="workout-actions">
                             ${!isCompleted ? `<button class="btn btn-primary" onclick="App.completeWorkout('${trainingDay}', ${appState.currentWeek})">${APP_CONFIG.labels.markComplete}</button>` : ''}
                             <button class="btn btn-secondary" onclick="App.viewWorkoutDetails('${trainingDay}')">${APP_CONFIG.labels.viewDetails}</button>
@@ -643,15 +650,32 @@ const App = (function () {
             UIModule.navigateToStep(step);
         },
 
+        /**
+         * Generate training plan based on user preferences
+         * Shows loading spinner during schedule generation
+         */
         generatePlan: function () {
-            // Generate schedule
-            appState.schedule = ScheduleModule.generateSchedule(
-                appState.goal,
-                appState.timeCommitment,
-                appState.preferredDays
-            );
+            // Show loading spinner
+            UIModule.showLoading('Generating your training plan...', 'This may take a few moments');
 
-            UIModule.navigateToStep(4);
+            // Use setTimeout to allow UI to update before heavy computation
+            setTimeout(() => {
+                try {
+                    // Generate schedule
+                    appState.schedule = ScheduleModule.generateSchedule(
+                        appState.goal,
+                        appState.timeCommitment,
+                        appState.preferredDays
+                    );
+
+                    UIModule.hideLoading();
+                    UIModule.navigateToStep(4);
+                } catch (error) {
+                    UIModule.hideLoading();
+                    console.error('Failed to generate schedule:', error);
+                    UIModule.showNotification('Failed to generate training plan. Please try again.', 'error');
+                }
+            }, 100);
         },
 
         startApp: function () {
@@ -672,7 +696,10 @@ const App = (function () {
             showMainApp();
         },
 
-        // Navigation
+        /**
+         * Switch between application tabs
+         * @param {string} tabName - Tab to switch to ('today', 'week', 'progress', 'cyclingclub', 'settings')
+         */
         switchTab: function (tabName) {
             UIModule.switchTab(tabName);
 
@@ -695,6 +722,10 @@ const App = (function () {
             }
         },
 
+        /**
+         * Navigate to previous or next week
+         * @param {number} direction - Direction to navigate (-1 for previous, +1 for next)
+         */
         changeWeek: function (direction) {
             const newWeek = appState.currentWeek + direction;
             if (newWeek >= 1 && newWeek <= APP_CONFIG.weeks.total) {
@@ -706,7 +737,10 @@ const App = (function () {
             }
         },
 
-        // Jump to the current week in Week view
+        /**
+         * Jump to the current week based on program start date
+         * Automatically calculates which week user is in and navigates to it
+         */
         jumpToCurrentWeek: function () {
             const actualWeek = calculateCurrentWeek();
             appState.currentWeek = actualWeek;
@@ -716,7 +750,11 @@ const App = (function () {
             updateStats();
         },
 
-        // Workout methods
+        /**
+         * Mark a workout as completed
+         * @param {number|string} day - Day index (0-6) or day name ('Mon'-'Sun')
+         * @param {number} [week] - Week number, defaults to current week
+         */
         completeWorkout: function (day, week) {
             // Convert day to dayIndex if it's a day name (Mon, Tue, etc.)
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -740,23 +778,55 @@ const App = (function () {
         },
 
         swapWorkout: function (day, week) {
-            const currentWorkout = appState.schedule[week || appState.currentWeek][day];
+            // Convert dayIndex to day name if needed
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayName = day;
+
+            // If day is a number (dayIndex), convert to day name
+            if (typeof day === 'number' || (!isNaN(day) && !days.includes(day))) {
+                dayName = days[parseInt(day)];
+            }
+
+            const currentWorkout = appState.schedule[week || appState.currentWeek][dayName];
+
+            if (!currentWorkout) {
+                UIModule.showNotification('No workout found for this day');
+                return;
+            }
+
             const alternative = WorkoutModule.findAlternativeWorkout(currentWorkout, appState.goal);
 
             if (alternative) {
-                appState.schedule[week || appState.currentWeek][day] = {
+                // Handle duration - could be a number or an object
+                let workoutDuration;
+                if (typeof alternative.duration === 'object' && alternative.duration !== null) {
+                    workoutDuration = alternative.duration[appState.timeCommitment] || alternative.duration.enthusiast || 60;
+                } else {
+                    workoutDuration = alternative.duration || currentWorkout.duration || 60;
+                }
+
+                // Ensure intensity is preserved/set
+                const workoutIntensity = alternative.intensity || currentWorkout.intensity || 'easy';
+
+                appState.schedule[week || appState.currentWeek][dayName] = {
                     ...alternative,
-                    duration: alternative.duration[appState.timeCommitment]
+                    duration: workoutDuration,
+                    intensity: workoutIntensity
                 };
 
                 StorageModule.saveState(appState);
                 updateToday();
+                updateWeekView();
                 UIModule.showNotification(APP_CONFIG.messages.workoutSwapped);
             } else {
                 UIModule.showNotification(APP_CONFIG.messages.noAlternative);
             }
         },
 
+        /**
+         * View detailed workout information for a specific day
+         * @param {string|number} day - Day name ('Mon'-'Sun') or index (0-6)
+         */
         viewWorkoutDetails: function (day) {
             UIModule.switchTab('today');
 
@@ -803,8 +873,22 @@ const App = (function () {
             `;
         },
 
+        /**
+         * Download workout as Zwift .ZWO file
+         * @param {string|number} day - Day name ('Mon'-'Sun') or index (0-6)
+         * @param {number} [week] - Week number, defaults to current week
+         */
         downloadZwiftWorkout: function (day, week) {
-            const workout = appState.schedule[week || appState.currentWeek][day];
+            // Convert dayIndex to day name if needed
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let dayName = day;
+
+            // If day is a number (dayIndex), convert to day name
+            if (typeof day === 'number' || (!isNaN(day) && !days.includes(day))) {
+                dayName = days[parseInt(day)];
+            }
+
+            const workout = appState.schedule[week || appState.currentWeek][dayName];
 
             if (!workout) {
                 UIModule.showNotification('No workout found for this day');
@@ -819,7 +903,7 @@ const App = (function () {
             const success = ZwiftExport.downloadWorkout(
                 workout,
                 appState.ftp,
-                day,
+                dayName,
                 week || appState.currentWeek
             );
 
@@ -1033,6 +1117,10 @@ const App = (function () {
             this.updateAdaptationPreview();
         },
 
+        /**
+         * Apply weekly adaptation based on user's available time slots
+         * Redistributes workouts while maintaining training principles
+         */
         applyWeeklyAdaptation: function () {
             const weekNum = appState.currentWeek;
             const timeSlots = window.currentTimeSlots;
@@ -1047,47 +1135,61 @@ const App = (function () {
                 return;
             }
 
-            if (!appState.originalSchedule) {
-                appState.originalSchedule = {};
-            }
-            if (!appState.originalSchedule[weekNum]) {
-                appState.originalSchedule[weekNum] = JSON.parse(JSON.stringify(appState.schedule[weekNum]));
-            }
+            // Show loading spinner
+            UIModule.showLoading('Adapting your week...', 'Redistributing workouts based on your time');
 
-            const result = WeeklyAdapter.adaptSchedule(
-                appState.originalSchedule,
-                weekNum,
-                timeSlots,
-                {
-                    preferredDays: appState.preferredDays,
-                    goal: appState.goal
+            // Use setTimeout to allow UI to update
+            setTimeout(() => {
+                try {
+                    if (!appState.originalSchedule) {
+                        appState.originalSchedule = {};
+                    }
+                    if (!appState.originalSchedule[weekNum]) {
+                        appState.originalSchedule[weekNum] = JSON.parse(JSON.stringify(appState.schedule[weekNum]));
+                    }
+
+                    const result = WeeklyAdapter.adaptSchedule(
+                        appState.originalSchedule,
+                        weekNum,
+                        timeSlots,
+                        {
+                            preferredDays: appState.preferredDays,
+                            goal: appState.goal
+                        }
+                    );
+
+                    if (!appState.weeklyAdaptations) {
+                        appState.weeklyAdaptations = {};
+                    }
+
+                    appState.weeklyAdaptations[weekNum] = {
+                        timeSlots: timeSlots,
+                        adaptedSchedule: result.schedule,
+                        summary: result.summary,
+                        appliedAt: new Date().toISOString()
+                    };
+
+                    appState.schedule[weekNum] = result.schedule;
+
+                    StorageModule.saveState(appState);
+
+                    updateToday();
+                    updateWeekView();
+                    updateStats();
+
+                    UIModule.hideLoading();
+
+                    UIModule.showNotification(
+                        `Week adapted! ${result.summary.adaptedWorkouts} workouts, ${result.summary.polarizationScore}% polarization.`
+                    );
+
+                    this.closeAdapterModal();
+                } catch (error) {
+                    UIModule.hideLoading();
+                    console.error('Failed to adapt week:', error);
+                    UIModule.showNotification('Failed to adapt week. Please try again.', 'error');
                 }
-            );
-
-            if (!appState.weeklyAdaptations) {
-                appState.weeklyAdaptations = {};
-            }
-
-            appState.weeklyAdaptations[weekNum] = {
-                timeSlots: timeSlots,
-                adaptedSchedule: result.schedule,
-                summary: result.summary,
-                appliedAt: new Date().toISOString()
-            };
-
-            appState.schedule[weekNum] = result.schedule;
-
-            StorageModule.saveState(appState);
-
-            updateToday();
-            updateWeekView();
-            updateStats();
-
-            UIModule.showNotification(
-                `Week adapted! ${result.summary.adaptedWorkouts} workouts, ${result.summary.polarizationScore}% polarization.`
-            );
-
-            this.closeAdapterModal();
+            }, 100);
         },
 
         removeWeeklyAdaptation: function () {
