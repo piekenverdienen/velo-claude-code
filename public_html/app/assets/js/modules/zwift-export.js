@@ -126,6 +126,35 @@ const ZwiftExport = (function () {
         return avg / 100; // Convert to decimal (65% → 0.65)
     }
 
+    /**
+     * Map percentage or intensity string to category (easy/moderate/hard)
+     * Used for warmup duration, cooldown duration, and tag generation
+     * @param {string} intensity - Intensity string ("65% FTP", "easy", "80-85% FTP", etc.)
+     * @returns {string} Category: 'easy', 'moderate', or 'hard'
+     */
+    function mapIntensityToCategory(intensity) {
+        if (!intensity) return 'easy';
+
+        // If already a category, return it
+        if (intensity === 'easy' || intensity === 'moderate' || intensity === 'hard' || intensity === 'rest') {
+            return intensity;
+        }
+
+        // If percentage string, convert to category
+        const percentage = parseIntensityPercentage(intensity);
+        if (percentage !== null) {
+            const avg = percentage * 100; // Convert back to percentage for comparison
+
+            // Map percentage ranges to categories (same logic as WorkoutModule)
+            if (avg < 70) return 'easy';       // Recovery/Zone 1
+            if (avg < 85) return 'moderate';   // Tempo/Sweet Spot
+            return 'hard';                      // Threshold/VO2max/Sprints
+        }
+
+        // Fallback for unknown formats
+        return 'easy';
+    }
+
     // Determine power for workout type
     function getPowerForWorkout(workoutType, intensity) {
         const mapping = {
@@ -142,13 +171,16 @@ const ZwiftExport = (function () {
 
     /**
      * Generate structured warmup protocol
-     * Hard workouts: 10 min structured warmup
-     * Easy/Moderate: 5 min simple ramp
-     * @param {string} intensity - Workout intensity level
+     * Hard workouts (>=85% FTP): 10 min structured warmup
+     * Easy/Moderate (<85% FTP): 5 min simple ramp
+     * @param {string} intensity - Workout intensity level (percentage or category)
      * @returns {string} XML warmup segments
      */
     function generateStructuredWarmup(intensity) {
-        if (intensity === 'hard') {
+        // Map intensity to category (handles both "hard" and "110-120% FTP")
+        const category = mapIntensityToCategory(intensity);
+
+        if (category === 'hard') {
             // 10-minute structured warmup for intense workouts
             return `        <!-- Structured Warmup: 10 minutes -->
         <SteadyState Duration="120" Power="0.50" pace="0"/>
@@ -180,10 +212,13 @@ const ZwiftExport = (function () {
         // Check if intensity is a percentage string (e.g., "65% FTP")
         const intensityPercentage = parseIntensityPercentage(intensity);
 
-        // 1. Calculate durations
+        // Map intensity to category for warmup/cooldown duration
+        const intensityCategory = mapIntensityToCategory(intensity);
+
+        // 1. Calculate durations based on intensity CATEGORY (not string comparison)
         const totalDuration = duration * 60; // Convert to seconds
-        const warmupDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
-        const cooldownDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
+        const warmupDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
+        const cooldownDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
         const mainDuration = totalDuration - warmupDuration - cooldownDuration;
 
         // 2. Structured Warmup
@@ -278,15 +313,20 @@ const ZwiftExport = (function () {
         const segments = generateWorkoutSegments(workout);
         const intensity = workout.intensity || 'easy';
 
-        // Determine tag label for intensity
+        // Determine tags for intensity - include BOTH category and percentage if available
         const intensityPercentage = parseIntensityPercentage(intensity);
-        let intensityTag;
-        if (intensityPercentage !== null) {
-            // For percentage strings, show the percentage
-            intensityTag = intensity; // e.g., "65% FTP"
-        } else {
-            // For categories, capitalize first letter
-            intensityTag = intensity.charAt(0).toUpperCase() + intensity.slice(1);
+        const intensityCategory = mapIntensityToCategory(intensity);
+
+        // Build intensity tags
+        let intensityTags = '';
+
+        // Always add category tag (Easy/Moderate/Hard)
+        const categoryLabel = intensityCategory.charAt(0).toUpperCase() + intensityCategory.slice(1);
+        intensityTags += `        <tag name="${categoryLabel}"/>\n`;
+
+        // If we have a percentage string, add it as additional tag
+        if (intensityPercentage !== null && intensity.includes('%')) {
+            intensityTags += `        <tag name="${intensity}"/>\n`;
         }
 
         // Generate complete XML
@@ -298,8 +338,7 @@ const ZwiftExport = (function () {
     <sportType>bike</sportType>
     <tags>
         <tag name="Polarized"/>
-        <tag name="${intensityTag}"/>
-        <tag name="Week${week}"/>
+${intensityTags}        <tag name="Week${week}"/>
     </tags>
     <workout>
 ${segments}    </workout>
