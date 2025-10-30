@@ -104,6 +104,28 @@ const ZwiftExport = (function () {
         };
     }
 
+    /**
+     * Parse percentage from intensity string
+     * Supports: "65% FTP", "80-85% FTP", "55%", etc.
+     * @param {string} intensity - Intensity string
+     * @returns {number|null} Average percentage as decimal (e.g., 0.65 for 65%) or null
+     */
+    function parseIntensityPercentage(intensity) {
+        if (!intensity || typeof intensity !== 'string' || !intensity.includes('%')) {
+            return null;
+        }
+
+        // Match patterns: "65%", "65% FTP", "80-85%", "80-85% FTP"
+        const match = intensity.match(/(\d+)(?:-(\d+))?%/);
+        if (!match) return null;
+
+        const low = parseInt(match[1]);
+        const high = match[2] ? parseInt(match[2]) : low;
+        const avg = (low + high) / 2;
+
+        return avg / 100; // Convert to decimal (65% → 0.65)
+    }
+
     // Determine power for workout type
     function getPowerForWorkout(workoutType, intensity) {
         const mapping = {
@@ -155,6 +177,9 @@ const ZwiftExport = (function () {
         const structure = parseIntervalStructure(workout);
         const powers = getPowerForWorkout(structure.workoutType, intensity);
 
+        // Check if intensity is a percentage string (e.g., "65% FTP")
+        const intensityPercentage = parseIntensityPercentage(intensity);
+
         // 1. Calculate durations
         const totalDuration = duration * 60; // Convert to seconds
         const warmupDuration = intensity === 'hard' ? 600 : 300; // 10 min or 5 min
@@ -202,6 +227,11 @@ const ZwiftExport = (function () {
                 }
             });
 
+        } else if (intensityPercentage !== null) {
+            // Intensity is a percentage string (e.g., "65% FTP")
+            // Use the exact percentage specified
+            segments += `        <SteadyState Duration="${mainDuration}" Power="${intensityPercentage.toFixed(2)}" pace="0"/>\n`;
+
         } else if (intensity === 'easy') {
             // Easy endurance ride - only if NO intervals detected
             segments += `        <SteadyState Duration="${mainDuration}" Power="${POWER_ZONES.easy.high}" pace="0"/>\n`;
@@ -248,6 +278,17 @@ const ZwiftExport = (function () {
         const segments = generateWorkoutSegments(workout);
         const intensity = workout.intensity || 'easy';
 
+        // Determine tag label for intensity
+        const intensityPercentage = parseIntensityPercentage(intensity);
+        let intensityTag;
+        if (intensityPercentage !== null) {
+            // For percentage strings, show the percentage
+            intensityTag = intensity; // e.g., "65% FTP"
+        } else {
+            // For categories, capitalize first letter
+            intensityTag = intensity.charAt(0).toUpperCase() + intensity.slice(1);
+        }
+
         // Generate complete XML
         const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workout_file>
@@ -257,7 +298,7 @@ const ZwiftExport = (function () {
     <sportType>bike</sportType>
     <tags>
         <tag name="Polarized"/>
-        <tag name="${intensity.charAt(0).toUpperCase() + intensity.slice(1)}"/>
+        <tag name="${intensityTag}"/>
         <tag name="Week${week}"/>
     </tags>
     <workout>
