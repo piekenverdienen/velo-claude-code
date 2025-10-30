@@ -1009,9 +1009,111 @@ const UIModule = (function () {
         // VERBETERDE WORKOUT GRAPH FUNCTIES
         // =====================================================
 
+        /**
+         * Render workout graph using WorkoutParser (centralized parsing)
+         * This ensures visual display matches export exactly
+         * @param {Object} workout - Workout object from database
+         * @returns {string} HTML for workout graph
+         */
         renderWorkoutGraph: function (workout) {
             if (!workout) return '';
 
+            // Use WorkoutParser for canonical structure
+            let parsed;
+            try {
+                if (typeof WorkoutParser === 'undefined') {
+                    console.warn('WorkoutParser not loaded, using fallback');
+                    return this.renderWorkoutGraphFallback(workout);
+                }
+
+                parsed = WorkoutParser.parseWorkout(workout);
+            } catch (err) {
+                console.error('Error parsing workout:', err);
+                return this.renderWorkoutGraphFallback(workout);
+            }
+
+            // Convert parsed phases to flat array for rendering
+            const phases = [];
+
+            // Add warmup
+            if (parsed.phases.warmup) {
+                phases.push({
+                    name: 'Warm-up',
+                    duration: parsed.phases.warmup.duration,
+                    intensity: parsed.phases.warmup.intensity,
+                    type: 'warmup'
+                });
+            }
+
+            // Add main phases
+            parsed.phases.main.forEach((phase, index) => {
+                let name = 'Main Set';
+                if (phase.type === 'work' && phase.intervalNumber) {
+                    name = `Interval ${phase.intervalNumber}`;
+                } else if (phase.type === 'recovery') {
+                    name = 'Recovery';
+                } else if (phase.type === 'filler') {
+                    name = 'Easy Spin';
+                } else if (phase.pyramidStep) {
+                    name = `Pyramid ${phase.pyramidStep}`;
+                }
+
+                phases.push({
+                    name: name,
+                    duration: phase.duration,
+                    intensity: phase.intensity,
+                    type: phase.type
+                });
+            });
+
+            // Add cooldown
+            if (parsed.phases.cooldown) {
+                phases.push({
+                    name: 'Cool-down',
+                    duration: parsed.phases.cooldown.duration,
+                    intensity: parsed.phases.cooldown.intensity,
+                    type: 'cooldown'
+                });
+            }
+
+            // Calculate total and render
+            const totalDuration = parsed.totalDuration;
+
+            let barsHTML = '';
+            phases.forEach((phase) => {
+                const widthPercent = (phase.duration / totalDuration) * 100;
+                const heightPercent = Math.min(phase.intensity * 100, 100);
+                const zoneClass = this.getZoneClass(phase.intensity);
+
+                barsHTML += `
+                    <div class="graph-bar ${zoneClass}"
+                         style="width: ${widthPercent}%; height: ${heightPercent}%;"
+                         title="${phase.name}: ${phase.duration.toFixed(1)}min @ ${Math.round(phase.intensity * 100)}% FTP">
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="workout-graph-container">
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">⚡ Workout Profile</h4>
+                    <div class="workout-graph">
+                        ${barsHTML}
+                    </div>
+                    <div class="graph-timeline">
+                        <span>0 min</span>
+                        <span>${Math.round(totalDuration / 2)} min</span>
+                        <span>${Math.round(totalDuration)} min</span>
+                    </div>
+                </div>
+            `;
+        },
+
+        /**
+         * Fallback rendering if WorkoutParser not available
+         * @param {Object} workout - Workout object
+         * @returns {string} HTML for workout graph
+         */
+        renderWorkoutGraphFallback: function(workout) {
             // Try parsing with details if available
             let phases = [];
             if (workout.details) {

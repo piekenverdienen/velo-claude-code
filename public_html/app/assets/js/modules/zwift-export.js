@@ -230,13 +230,144 @@ const ZwiftExport = (function () {
     }
 
     /**
-     * Generate workout segments with correct duration calculation
-     * Ensures warmup + main + cooldown = total workout duration
-     * Parses workout details to match visual display
-     * @param {Object} workout - Workout object with duration, intensity, details
+     * Generate workout segments using WorkoutParser (centralized parsing)
+     * Ensures visual display matches export exactly
+     * @param {Object} workout - Workout object from database
      * @returns {string} XML segments for Zwift workout
      */
     function generateWorkoutSegments(workout) {
+        let segments = '';
+
+        // Use WorkoutParser for canonical structure
+        let parsed;
+        try {
+            if (typeof WorkoutParser === 'undefined') {
+                console.warn('WorkoutParser not loaded, using fallback');
+                return generateWorkoutSegmentsFallback(workout);
+            }
+
+            parsed = WorkoutParser.parseWorkout(workout);
+        } catch (err) {
+            console.error('Error parsing workout for export:', err);
+            return generateWorkoutSegmentsFallback(workout);
+        }
+
+        // 1. Generate Warmup
+        if (parsed.phases.warmup) {
+            const warmupSeconds = Math.round(parsed.phases.warmup.duration * 60);
+            const category = parsed.intensity.category;
+
+            if (category === 'hard' && warmupSeconds >= 600) {
+                // 10-minute structured warmup for intense workouts
+                segments += `        <!-- Structured Warmup: ${parsed.phases.warmup.duration.toFixed(0)} minutes -->\n`;
+                segments += `        <SteadyState Duration="120" Power="0.50" pace="0"/>\n`;
+                segments += `        <SteadyState Duration="120" Power="0.60" pace="0"/>\n`;
+                segments += `        <SteadyState Duration="120" Power="0.70" pace="0"/>\n`;
+                segments += `        <SteadyState Duration="60" Power="0.80" pace="0"/>\n`;
+                segments += `        <SteadyState Duration="60" Power="0.50" pace="0"/>\n`;
+                segments += `        <SteadyState Duration="120" Power="0.75" pace="0"/>\n`;
+            } else {
+                // Simple ramp warmup
+                segments += `        <Warmup Duration="${warmupSeconds}" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
+            }
+        }
+
+        // 2. Generate Main Set
+        if (parsed.hasIntervals) {
+            // Intervals workout - separate work/recovery
+            segments += generateIntervalsSegments(parsed.phases.main);
+        } else {
+            // Steady state or mixed workout
+            parsed.phases.main.forEach(phase => {
+                const duration = Math.round(phase.duration * 60);
+                const power = phase.intensity.toFixed(2);
+                segments += `        <SteadyState Duration="${duration}" Power="${power}" pace="0"/>\n`;
+            });
+        }
+
+        // 3. Generate Cooldown
+        if (parsed.phases.cooldown) {
+            const cooldownSeconds = Math.round(parsed.phases.cooldown.duration * 60);
+            segments += `        <Cooldown Duration="${cooldownSeconds}" PowerLow="0.50" PowerHigh="0.40" pace="0"/>\n`;
+        }
+
+        return segments;
+    }
+
+    /**
+     * Generate intervals segments from parsed main phases
+     * @param {Array} mainPhases - Array of main phase objects
+     * @returns {string} XML intervals segments
+     */
+    function generateIntervalsSegments(mainPhases) {
+        let segments = '';
+        let currentInterval = null;
+        let intervalCount = 0;
+
+        mainPhases.forEach((phase, index) => {
+            if (phase.type === 'work') {
+                // Start of interval or standalone work phase
+                if (!currentInterval) {
+                    currentInterval = {
+                        onDuration: Math.round(phase.duration * 60),
+                        onPower: phase.intensity.toFixed(2),
+                        offDuration: 0,
+                        offPower: 0.55,
+                        repeat: 1
+                    };
+                    intervalCount = 1;
+                }
+            } else if (phase.type === 'recovery' && currentInterval) {
+                // Recovery after work phase
+                currentInterval.offDuration = Math.round(phase.duration * 60);
+                currentInterval.offPower = phase.intensity.toFixed(2);
+
+                // Check if next phase is same type of work (for repeat counting)
+                const nextWork = mainPhases[index + 2]; // Skip recovery, look at next work
+                if (nextWork && nextWork.type === 'work' &&
+                    Math.abs(nextWork.duration - (currentInterval.onDuration / 60)) < 0.1 &&
+                    Math.abs(nextWork.intensity - parseFloat(currentInterval.onPower)) < 0.01) {
+                    // Same interval repeating
+                    intervalCount++;
+                } else {
+                    // End of interval set, output it
+                    currentInterval.repeat = intervalCount;
+                    segments += `        <IntervalsT Repeat="${currentInterval.repeat}" OnDuration="${currentInterval.onDuration}" OffDuration="${currentInterval.offDuration}" OnPower="${currentInterval.onPower}" OffPower="${currentInterval.offPower}" pace="0"/>\n`;
+                    currentInterval = null;
+                    intervalCount = 0;
+                }
+            } else {
+                // Filler or other phase type
+                if (currentInterval) {
+                    // Output pending interval
+                    currentInterval.repeat = intervalCount;
+                    segments += `        <IntervalsT Repeat="${currentInterval.repeat}" OnDuration="${currentInterval.onDuration}" OffDuration="${currentInterval.offDuration}" OnPower="${currentInterval.onPower}" OffPower="${currentInterval.offPower}" pace="0"/>\n`;
+                    currentInterval = null;
+                    intervalCount = 0;
+                }
+
+                // Output this phase as steady state
+                const duration = Math.round(phase.duration * 60);
+                const power = phase.intensity.toFixed(2);
+                segments += `        <SteadyState Duration="${duration}" Power="${power}" pace="0"/>\n`;
+            }
+        });
+
+        // Output any remaining interval
+        if (currentInterval) {
+            currentInterval.repeat = intervalCount;
+            segments += `        <IntervalsT Repeat="${currentInterval.repeat}" OnDuration="${currentInterval.onDuration}" OffDuration="${currentInterval.offDuration}" OnPower="${currentInterval.onPower}" OffPower="${currentInterval.offPower}" pace="0"/>\n`;
+        }
+
+        return segments;
+    }
+
+    /**
+     * Fallback segment generation if WorkoutParser not available
+     * @param {Object} workout - Workout object
+     * @returns {string} XML segments
+     */
+    function generateWorkoutSegmentsFallback(workout) {
         let segments = '';
         const intensity = workout.intensity || 'easy';
         const duration = workout.duration || 60;
@@ -347,22 +478,45 @@ const ZwiftExport = (function () {
         const name = `Polarized_W${week}_${day}_${workout.name.replace(/\s+/g, '_')}`;
         const author = 'Polarized.cc';
         const segments = generateWorkoutSegments(workout);
-        const intensity = workout.intensity || 'easy';
 
-        // Determine tags for intensity - include BOTH category and percentage if available
-        const intensityPercentage = parseIntensityPercentage(intensity);
-        const intensityCategory = mapIntensityToCategory(intensity);
+        // Use WorkoutParser for intensity info if available
+        let intensityInfo;
+        if (typeof WorkoutParser !== 'undefined') {
+            try {
+                const parsed = WorkoutParser.parseWorkout(workout);
+                intensityInfo = {
+                    category: parsed.intensity.category,
+                    raw: parsed.intensity.raw,
+                    hasPercentage: parsed.intensity.raw && parsed.intensity.raw.includes('%')
+                };
+            } catch (err) {
+                console.warn('Using fallback for intensity tags');
+                intensityInfo = null;
+            }
+        }
+
+        // Fallback to old logic if WorkoutParser not available
+        if (!intensityInfo) {
+            const intensity = workout.intensity || 'easy';
+            const intensityPercentage = parseIntensityPercentage(intensity);
+            const intensityCategory = mapIntensityToCategory(intensity);
+            intensityInfo = {
+                category: intensityCategory,
+                raw: intensity,
+                hasPercentage: intensityPercentage !== null
+            };
+        }
 
         // Build intensity tags
         let intensityTags = '';
 
         // Always add category tag (Easy/Moderate/Hard)
-        const categoryLabel = intensityCategory.charAt(0).toUpperCase() + intensityCategory.slice(1);
+        const categoryLabel = intensityInfo.category.charAt(0).toUpperCase() + intensityInfo.category.slice(1);
         intensityTags += `        <tag name="${categoryLabel}"/>\n`;
 
         // If we have a percentage string, add it as additional tag
-        if (intensityPercentage !== null && intensity.includes('%')) {
-            intensityTags += `        <tag name="${intensity}"/>\n`;
+        if (intensityInfo.hasPercentage && intensityInfo.raw) {
+            intensityTags += `        <tag name="${intensityInfo.raw}"/>\n`;
         }
 
         // Generate complete XML
