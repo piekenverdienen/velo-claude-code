@@ -171,18 +171,17 @@ const ZwiftExport = (function () {
 
     /**
      * Generate structured warmup protocol
-     * Hard workouts (>=85% FTP): 10 min structured warmup
-     * Easy/Moderate (<85% FTP): 5 min simple ramp
-     * @param {string} intensity - Workout intensity level (percentage or category)
+     * Uses parsed warmup duration from workout details, or category-based default
+     * @param {number} warmupDuration - Warmup duration in seconds
+     * @param {string} intensityCategory - Intensity category (easy/moderate/hard)
      * @returns {string} XML warmup segments
      */
-    function generateStructuredWarmup(intensity) {
-        // Map intensity to category (handles both "hard" and "110-120% FTP")
-        const category = mapIntensityToCategory(intensity);
+    function generateStructuredWarmup(warmupDuration, intensityCategory) {
+        const warmupMinutes = warmupDuration / 60;
 
-        if (category === 'hard') {
+        if (intensityCategory === 'hard' && warmupDuration >= 600) {
             // 10-minute structured warmup for intense workouts
-            return `        <!-- Structured Warmup: 10 minutes -->
+            return `        <!-- Structured Warmup: ${warmupMinutes} minutes -->
         <SteadyState Duration="120" Power="0.50" pace="0"/>
         <SteadyState Duration="120" Power="0.60" pace="0"/>
         <SteadyState Duration="120" Power="0.70" pace="0"/>
@@ -191,14 +190,49 @@ const ZwiftExport = (function () {
         <SteadyState Duration="120" Power="0.75" pace="0"/>
 `;
         } else {
-            // 5-minute simple ramp for easy/moderate workouts
-            return `        <Warmup Duration="300" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
+            // Simple ramp warmup (duration from workout details or default)
+            return `        <Warmup Duration="${warmupDuration}" PowerLow="0.50" PowerHigh="0.70" pace="0"/>\n`;
         }
+    }
+
+    /**
+     * Parse warmup and cooldown durations from workout details
+     * Matches patterns like "Warm-up: 10 min", "Cool-down: 5 min"
+     * @param {string} details - Workout details string
+     * @param {string} intensityCategory - Intensity category (easy/moderate/hard)
+     * @returns {Object} {warmupDuration: seconds, cooldownDuration: seconds}
+     */
+    function parseWarmupCooldownDurations(details, intensityCategory) {
+        let warmupDuration, cooldownDuration;
+
+        // Try parsing from details first
+        if (details) {
+            const warmupMatch = details.match(/Warm-up:\s*(\d+)\s*min/i);
+            const cooldownMatch = details.match(/Cool-down:\s*(\d+)\s*min/i);
+
+            if (warmupMatch) {
+                warmupDuration = parseInt(warmupMatch[1]) * 60; // Convert to seconds
+            }
+            if (cooldownMatch) {
+                cooldownDuration = parseInt(cooldownMatch[1]) * 60; // Convert to seconds
+            }
+        }
+
+        // Fallback to category-based durations if not found in details
+        if (!warmupDuration) {
+            warmupDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
+        }
+        if (!cooldownDuration) {
+            cooldownDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
+        }
+
+        return { warmupDuration, cooldownDuration };
     }
 
     /**
      * Generate workout segments with correct duration calculation
      * Ensures warmup + main + cooldown = total workout duration
+     * Parses workout details to match visual display
      * @param {Object} workout - Workout object with duration, intensity, details
      * @returns {string} XML segments for Zwift workout
      */
@@ -206,6 +240,7 @@ const ZwiftExport = (function () {
         let segments = '';
         const intensity = workout.intensity || 'easy';
         const duration = workout.duration || 60;
+        const details = workout.details || '';
         const structure = parseIntervalStructure(workout);
         const powers = getPowerForWorkout(structure.workoutType, intensity);
 
@@ -215,14 +250,15 @@ const ZwiftExport = (function () {
         // Map intensity to category for warmup/cooldown duration
         const intensityCategory = mapIntensityToCategory(intensity);
 
-        // 1. Calculate durations based on intensity CATEGORY (not string comparison)
+        // 1. Parse warmup/cooldown from details (matches visual display logic)
+        const { warmupDuration, cooldownDuration } = parseWarmupCooldownDurations(details, intensityCategory);
+
+        // Calculate main duration
         const totalDuration = duration * 60; // Convert to seconds
-        const warmupDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
-        const cooldownDuration = intensityCategory === 'hard' ? 600 : 300; // 10 min or 5 min
         const mainDuration = totalDuration - warmupDuration - cooldownDuration;
 
-        // 2. Structured Warmup
-        segments += generateStructuredWarmup(intensity);
+        // 2. Structured Warmup (using parsed duration)
+        segments += generateStructuredWarmup(warmupDuration, intensityCategory);
 
         // 3. Main workout - FIXED to respect total duration
         if (structure.type === 'intervals' && mainDuration > 0) {
