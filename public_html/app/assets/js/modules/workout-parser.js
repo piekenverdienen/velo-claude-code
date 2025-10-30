@@ -203,21 +203,28 @@ const WorkoutParser = (function () {
      * @returns {Array} Array of main phase objects
      */
     function parseMainSet(details, intensity) {
+        // Extract Main section first to avoid matching warmup patterns like "3x1 min builds"
+        let mainSection = details;
+        const mainMatch = details.match(/Main:\s*([^.]+(?:\.|$))/i);
+        if (mainMatch) {
+            mainSection = mainMatch[1]; // Use only the Main section
+        }
+
         // Try interval pattern: "3x8 min @ 80-85% FTP, 4 min recovery"
-        const intervalMatch = details.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)(?:\s+@\s+(\d+(?:-\d+)?)%?\s*FTP)?(?:,\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?)\s*(?:recovery|easy|rest))?/i);
+        const intervalMatch = mainSection.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)(?:\s+@\s+(\d+(?:-\d+)?)%?\s*FTP)?(?:,\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?)\s*(?:recovery|easy|rest))?/i);
 
         if (intervalMatch) {
             return parseIntervals(intervalMatch, intensity);
         }
 
         // Try pyramid pattern: "5-10-15-10-5 min"
-        const pyramidMatch = details.match(/(\d+)-(\d+)-(\d+)-(\d+)-(\d+)\s*min/i);
+        const pyramidMatch = mainSection.match(/(\d+)-(\d+)-(\d+)-(\d+)-(\d+)\s*min/i);
         if (pyramidMatch) {
             return parsePyramid(pyramidMatch, intensity);
         }
 
         // Try steady state with duration: "45 min steady"
-        const steadyMatch = details.match(/Main:\s*(\d+)\s*min\s+steady/i);
+        const steadyMatch = mainSection.match(/(\d+)\s*min\s+steady/i);
         if (steadyMatch) {
             return [{
                 duration: parseInt(steadyMatch[1]),
