@@ -44,7 +44,7 @@ const ZwiftExport = (function () {
 
     /**
      * Parse interval structure from workout details
-     * Supports: minutes, seconds, various time formats
+     * Supports: minutes, seconds, various time formats, pyramid patterns
      * @param {Object} workout - Workout object with details
      * @returns {Object} Parsed interval structure with type, repeat, durations
      */
@@ -61,8 +61,26 @@ const ZwiftExport = (function () {
             return num * 60; // Convert minutes to seconds
         };
 
+        // Extract Main section if present (to avoid parsing warmup/cooldown intervals)
+        let mainSection = details;
+        const mainMatch = details.match(/Main:\s*(.+?)(?:Cool-down:|Cooldown:|$)/i);
+        if (mainMatch) {
+            mainSection = mainMatch[1];
+        }
+
+        // Check for pyramid pattern first: "5-10-15-10-5 min" or "5-8-5 min"
+        const pyramidMatch = mainSection.match(/(\d+)-(\d+)-(\d+)(?:-(\d+))?(?:-(\d+))?\s*min/i);
+        if (pyramidMatch) {
+            return {
+                type: 'pyramid',
+                workoutType: type,
+                pyramidSegments: pyramidMatch.slice(1).filter(x => x).map(x => parseInt(x) * 60) // Convert to seconds
+            };
+        }
+
         // Match patterns: "10x30 seconds", "5x3 min", "4x4min at 90%", "3x8 min"
-        const intervalMatch = details.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)/i);
+        // Now searching in main section only
+        const intervalMatch = mainSection.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)/i);
 
         if (intervalMatch) {
             const repeat = parseInt(intervalMatch[1]);
@@ -71,7 +89,7 @@ const ZwiftExport = (function () {
             const duration = parseTimeToSeconds(workValue, workUnit);
 
             // Match recovery: "3 min recovery", "30s rest", "4min easy", "2 minute recovery"
-            const recoveryMatch = details.match(/(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:recovery|easy|rest)/i);
+            const recoveryMatch = mainSection.match(/(\d+(?:\.\d+)?)\s*(s(?:ec)?(?:ond)?s?|min(?:ute)?s?)\s*(?:recovery|easy|rest)/i);
 
             let recoveryDuration;
             if (recoveryMatch) {
@@ -90,7 +108,7 @@ const ZwiftExport = (function () {
             };
         }
 
-        // Check for pyramid (5-10-15-10-5)
+        // Check for pyramid type (even if no pattern matched, workout type might indicate it)
         if (type === 'pyramid') {
             return {
                 type: 'pyramid',
@@ -416,10 +434,10 @@ const ZwiftExport = (function () {
             }
 
         } else if (structure.type === 'pyramid') {
-            // Pyramid workout (5-10-15-10-5 min)
+            // Pyramid workout - use parsed segments if available, otherwise default
             const pyramidPower = powers.on;
             const recoveryPower = powers.off;
-            const segments_pyramid = [300, 600, 900, 600, 300]; // 5,10,15,10,5 min in seconds
+            const segments_pyramid = structure.pyramidSegments || [300, 600, 900, 600, 300]; // Default: 5,10,15,10,5 min
             const recovery = 180; // 3 min recovery
 
             segments_pyramid.forEach((seg, index) => {
