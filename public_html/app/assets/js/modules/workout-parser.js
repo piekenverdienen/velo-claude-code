@@ -366,23 +366,12 @@ const WorkoutParser = (function () {
 
         const difference = totalDuration - currentTotal;
 
-        // If difference > 2 minutes, add filler to main
+        // Log duration mismatch for debugging, but trust the parsed details
+        // Database durations are often estimates and may not match exact workout details
         if (Math.abs(difference) > 2) {
-            if (difference > 0) {
-                // Add steady state filler
-                phases.main.push({
-                    duration: difference,
-                    intensity: 0.65,  // Easy spinning
-                    type: 'filler'
-                });
-            } else {
-                // Duration mismatch warning
-                console.warn(`Workout phases (${currentTotal} min) exceed total duration (${totalDuration} min)`);
-                // Proportionally reduce main phases
-                const scale = (totalDuration - (phases.warmup?.duration || 0) - (phases.cooldown?.duration || 0)) /
-                              phases.main.reduce((sum, p) => sum + p.duration, 0);
-                phases.main.forEach(phase => phase.duration *= scale);
-            }
+            console.info(`Duration mismatch: Database=${totalDuration}min, Parsed=${currentTotal}min, Diff=${difference.toFixed(1)}min`);
+            // We trust the parsed details from workout description over database duration
+            // No filler added - export will match visual display exactly
         }
 
         return phases;
