@@ -467,17 +467,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 75,
                         displayName: "Long Zone 1 Ride (Quick)",
-                        details: "Eat every 30 min. Drink every 15 min. Maintain steady Zone 1. 75 min."
+                        details: "Warm-up: 10 min. Main: 60 min @ 60-65% FTP, steady Zone 1. Eat every 30 min, drink every 15 min. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 120,
                         displayName: "Long Zone 1 Ride",
-                        details: "Extended endurance ride. Eat every 30 min. Drink every 15 min. Steady Zone 1."
+                        details: "Warm-up: 10 min. Main: 105 min @ 60-65% FTP, steady Zone 1. Eat every 30 min, drink every 15 min. Cool-down: 5 min."
                     },
                     long: {
                         duration: 165,
                         displayName: "Long Zone 1 Ride (Extended)",
-                        details: "Long endurance build. Practice all race day nutrition. Steady Zone 1 throughout."
+                        details: "Warm-up: 10 min. Main: 150 min @ 60-65% FTP, steady Zone 1. Practice all race day nutrition. Cool-down: 5 min."
                     }
                 }
             },
@@ -490,17 +490,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 45,
                         displayName: "Recovery Endurance (Quick)",
-                        details: "Easy aerobic ride. Should feel too easy. High cadence. 45 min."
+                        details: "Warm-up: 5 min. Main: 35 min @ 55-60% FTP, high cadence 90+ rpm. Should feel too easy. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 75,
                         displayName: "Recovery Endurance",
-                        details: "Pure aerobic ride. Should feel too easy. High cadence throughout."
+                        details: "Warm-up: 5 min. Main: 65 min @ 55-60% FTP, high cadence 90+ rpm. Should feel too easy. Cool-down: 5 min."
                     },
                     long: {
                         duration: 105,
                         displayName: "Recovery Endurance (Extended)",
-                        details: "Extended recovery ride. Easy effort, high cadence. Build endurance base."
+                        details: "Warm-up: 5 min. Main: 95 min @ 55-60% FTP, high cadence 90+ rpm. Extended recovery to build endurance base. Cool-down: 5 min."
                     }
                 }
             },
@@ -513,17 +513,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 80,
                         displayName: "Fondo Base Miles (Quick)",
-                        details: "Steady Zone 2 ride. Practice eating and drinking. Some gentle rolling terrain."
+                        details: "Warm-up: 10 min. Main: 65 min @ 65-70% FTP, steady Zone 2. Practice eating and drinking. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 130,
                         displayName: "Fondo Base Miles",
-                        details: "Extended Zone 2. Practice eating and drinking on the bike. Include some gentle rolling terrain."
+                        details: "Warm-up: 10 min. Main: 115 min @ 65-70% FTP, steady Zone 2. Practice eating and drinking on the bike. Cool-down: 5 min."
                     },
                     long: {
                         duration: 180,
                         displayName: "Fondo Base Miles (Extended)",
-                        details: "Long endurance ride. Zone 2 throughout. Full race day nutrition practice."
+                        details: "Warm-up: 10 min. Main: 165 min @ 65-70% FTP, steady Zone 2. Full race day nutrition practice. Cool-down: 5 min."
                     }
                 }
             }
@@ -609,17 +609,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 75,
                         displayName: "Gran Fondo Specific (Quick)",
-                        details: "Include 2x8 min @ 90-100% FTP within a 75 min ride. Simulate race dynamics."
+                        details: "Warm-up: 10 min. Main: 55 min endurance pace with 2x8 min @ 90-100% FTP (8 min recovery between). Simulate race dynamics. Cool-down: 10 min."
                     },
                     medium: {
                         duration: 120,
                         displayName: "Gran Fondo Specific",
-                        details: "Include 3x8 min @ 90-100% FTP within a long ride. Simulate race dynamics. Full nutrition."
+                        details: "Warm-up: 10 min. Main: 100 min endurance pace with 3x8 min @ 90-100% FTP (10 min recovery between). Simulate race dynamics. Full nutrition. Cool-down: 10 min."
                     },
                     long: {
                         duration: 165,
                         displayName: "Gran Fondo Specific (Extended)",
-                        details: "Extended event simulation. 4x8 min @ 90-100% FTP. Full race day practice."
+                        details: "Warm-up: 10 min. Main: 145 min endurance pace with 4x8 min @ 90-100% FTP (10 min recovery between). Full race day practice. Cool-down: 10 min."
                     }
                 }
             },
@@ -655,17 +655,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 90,
                         displayName: "Race Simulation (Quick)",
-                        details: "Compressed race sim. Include climbs, efforts, steady sections. Practice race nutrition."
+                        details: "Warm-up: 10 min. Main: 70 min race simulation (varied efforts: climbs, tempo, steady sections). Practice race nutrition. Cool-down: 10 min."
                     },
                     medium: {
                         duration: 130,
                         displayName: "Race Simulation",
-                        details: "Full race simulation. Climbs, descents, attacks, steady sections. Full race nutrition strategy."
+                        details: "Warm-up: 10 min. Main: 110 min race simulation (varied efforts: climbs, descents, attacks, steady sections). Full race nutrition strategy. Cool-down: 10 min."
                     },
                     long: {
                         duration: 180,
                         displayName: "Race Simulation (Extended)",
-                        details: "Extended race simulation. Everything: climbs, descents, attacks, steady work. Full race day dress rehearsal."
+                        details: "Warm-up: 10 min. Main: 160 min race simulation (varied efforts: climbs, descents, attacks, steady work). Full race day dress rehearsal. Cool-down: 10 min."
                     }
                 }
             }
@@ -732,17 +732,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 45,
                         displayName: "Recovery Spin (Quick)",
-                        details: "Just spin easy for 45 min. 90+ rpm. No efforts."
+                        details: "Warm-up: 5 min. Main: 35 min @ 50-60% FTP, high cadence 90+ rpm. Just spin easy, no efforts. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 60,
                         displayName: "Recovery Spin",
-                        details: "Easy 60 min spin. High cadence, minimal resistance. Active recovery."
+                        details: "Warm-up: 5 min. Main: 50 min @ 50-60% FTP, high cadence 90+ rpm. Minimal resistance, active recovery. Cool-down: 5 min."
                     },
                     long: {
                         duration: 90,
                         displayName: "Recovery Spin (Extended)",
-                        details: "Long recovery ride. 90 min @ 50-60% FTP. Stay relaxed."
+                        details: "Warm-up: 5 min. Main: 80 min @ 50-60% FTP, high cadence 90+ rpm. Stay relaxed. Cool-down: 5 min."
                     }
                 }
             }
@@ -897,17 +897,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 120,
                         displayName: "Gran Fondo Race Day (Quick)",
-                        details: "Full 2-hour simulation. Include surges, climbs, tempo blocks. Practice race nutrition."
+                        details: "Warm-up: 10 min. Main: 100 min race simulation (varied efforts: surges, climbs, tempo blocks). Practice race nutrition. Cool-down: 10 min."
                     },
                     medium: {
                         duration: 180,
                         displayName: "Gran Fondo Race Day",
-                        details: "Full 3-hour race simulation. Varied efforts, climbs, descents. Full race nutrition strategy."
+                        details: "Warm-up: 10 min. Main: 160 min race simulation (varied efforts: climbs, descents, tempo blocks). Full race nutrition strategy. Cool-down: 10 min."
                     },
                     long: {
                         duration: 240,
                         displayName: "Gran Fondo Race Day (Extended)",
-                        details: "Extended 4-hour simulation. Everything: climbs, flats, attacks, tempo work. Full race day dress rehearsal."
+                        details: "Warm-up: 10 min. Main: 220 min race simulation (varied efforts: climbs, flats, attacks, tempo work). Full race day dress rehearsal. Cool-down: 10 min."
                     }
                 }
             }
