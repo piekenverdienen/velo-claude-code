@@ -786,17 +786,13 @@
                         <h3>⚡ Boost FTP</h3>
                         <p>Increase your threshold power for racing and climbing</p>
                     </div>
-                    <div class="goal-card" onclick="selectGoal('endurance', this)">
-                        <h3>🏔️ Build Endurance</h3>
-                        <p>Conquer gran fondos and century rides</p>
+                    <div class="goal-card" onclick="selectGoal('granfondo', this)">
+                        <h3>🏔️ Gran Fondo</h3>
+                        <p>Conquer gran fondos and century rides with endurance power</p>
                     </div>
                     <div class="goal-card" onclick="selectGoal('climbing', this)">
                         <h3>⛰️ Climb Stronger</h3>
                         <p>Dominate hills with better power-to-weight</p>
-                    </div>
-                    <div class="goal-card" onclick="selectGoal('speed', this)">
-                        <h3>💨 Get Faster</h3>
-                        <p>Improve sprint power and top-end speed</p>
                     </div>
                 </div>
 
@@ -1107,9 +1103,8 @@
             const wkg = userData.ftp && userData.weight ? (userData.ftp / userData.weight).toFixed(2) : '-';
             const goalNames = {
                 'ftp': '⚡ Boost FTP',
-                'endurance': '🏔️ Build Endurance',
-                'climbing': '⛰️ Climb Stronger',
-                'speed': '💨 Get Faster'
+                'granfondo': '🏔️ Gran Fondo',
+                'climbing': '⛰️ Climb Stronger'
             };
             
             document.getElementById('summaryContent').innerHTML = `

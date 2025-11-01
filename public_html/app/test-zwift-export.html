@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Zwift Export Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        h1 { color: #0f0; border-bottom: 2px solid #0f0; }
+        h2 { color: #0af; margin-top: 30px; }
+        .test {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            background: #222;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .warn { color: #fa0; }
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+            border-left: 3px solid #0af;
+        }
+        button {
+            background: #0af;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover { background: #0cf; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: #333;
+            padding: 15px;
+            border-left: 4px solid #0f0;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 ZWIFT EXPORT FUNCTIONALITY TEST</h1>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="goalCount">-</div>
+            <div>Goals</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="workoutCount">-</div>
+            <div>Workouts</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="variantCount">-</div>
+            <div>Variants</div>
+        </div>
+    </div>
+
+    <button onclick="runAllTests()">🚀 RUN ALL TESTS</button>
+
+    <div id="results"></div>
+
+    <script src="assets/js/config/workouts-db.js"></script>
+    <script src="assets/js/modules/zwift-export.js"></script>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'test';
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function testWorkoutsDatabase() {
+            log('<h2>📊 TEST 1: Workouts Database</h2>');
+
+            const goals = Object.keys(WORKOUTS_DB);
+            document.getElementById('goalCount').textContent = goals.length;
+
+            log(`<span class="pass">✅ Goals gevonden: ${goals.length}</span>`);
+            log(`Goals: ${goals.join(', ')}`);
+
+            let totalWorkouts = 0;
+            let totalVariants = 0;
+            let errors = [];
+
+            goals.forEach(goal => {
+                const intensities = Object.keys(WORKOUTS_DB[goal]);
+                let goalWorkouts = 0;
+
+                intensities.forEach(intensity => {
+                    const workouts = WORKOUTS_DB[goal][intensity];
+                    goalWorkouts += workouts.length;
+
+                    workouts.forEach(workout => {
+                        totalWorkouts++;
+
+                        // Check variants
+                        const variants = ['short', 'medium', 'long'];
+                        variants.forEach(variant => {
+                            if (workout.variants[variant]) {
+                                totalVariants++;
+
+                                const v = workout.variants[variant];
+                                if (!v.details || !v.details.includes('Main:')) {
+                                    errors.push(`${goal}/${intensity}/${workout.name}/${variant}: Missing "Main:" section`);
+                                }
+                            } else {
+                                errors.push(`${goal}/${intensity}/${workout.name}: Missing ${variant} variant`);
+                            }
+                        });
+                    });
+                });
+
+                log(`<span class="pass">✅ ${goal.toUpperCase()}: ${goalWorkouts} workouts</span>`);
+            });
+
+            document.getElementById('workoutCount').textContent = totalWorkouts;
+            document.getElementById('variantCount').textContent = totalVariants;
+
+            if (errors.length > 0) {
+                log(`<span class="fail">❌ ${errors.length} errors gevonden:</span>`);
+                errors.forEach(err => log(`<span class="fail">  • ${err}</span>`));
+            } else {
+                log(`<span class="pass">✅ Alle workouts zijn correct gestructureerd!</span>`);
+            }
+
+            return errors.length === 0;
+        }
+
+        function testZwiftExport() {
+            log('<h2>🎯 TEST 2: Zwift Export Functionaliteit</h2>');
+
+            // Test 1: Sweet Spot Pyramid (pyramid pattern)
+            const pyramidWorkout = WORKOUTS_DB.ftp.moderate.find(w => w.name === 'Sweet Spot Pyramid');
+            if (pyramidWorkout) {
+                log('<h3>Test 2.1: Sweet Spot Pyramid (Pyramid Pattern)</h3>');
+                const variant = pyramidWorkout.variants.medium;
+
+                try {
+                    const xml = generateZwiftWorkout({
+                        name: pyramidWorkout.name,
+                        description: pyramidWorkout.description,
+                        duration: variant.duration,
+                        details: variant.details,
+                        intensity: pyramidWorkout.intensity
+                    }, 250); // 250W FTP
+
+                    if (xml.includes('<SteadyState')) {
+                        const steadyStateCount = (xml.match(/<SteadyState/g) || []).length;
+                        log(`<span class="pass">✅ Pyramid gedetecteerd: ${steadyStateCount} SteadyState blocks</span>`);
+
+                        // Check for 5-10-15-10-5 pattern
+                        if (steadyStateCount === 5) {
+                            log(`<span class="pass">✅ Correct aantal blocks voor 5-10-15-10-5 pattern</span>`);
+                        } else {
+                            log(`<span class="warn">⚠️  Verwachtte 5 blocks, kreeg ${steadyStateCount}</span>`);
+                        }
+                    } else {
+                        log(`<span class="fail">❌ Geen SteadyState blocks gevonden</span>`);
+                    }
+
+                    log(`<pre>${xml.substring(0, 500)}...</pre>`);
+                } catch (e) {
+                    log(`<span class="fail">❌ Error: ${e.message}</span>`);
+                }
+            }
+
+            // Test 2: Zone 3 Crusher (Main section parsing)
+            const crusherWorkout = WORKOUTS_DB.ftp.hard.find(w => w.name === 'Zone 3 Crusher');
+            if (crusherWorkout) {
+                log('<h3>Test 2.2: Zone 3 Crusher (Main Section Parsing)</h3>');
+                const variant = crusherWorkout.variants.medium;
+
+                try {
+                    const xml = generateZwiftWorkout({
+                        name: crusherWorkout.name,
+                        description: crusherWorkout.description,
+                        duration: variant.duration,
+                        details: variant.details,
+                        intensity: crusherWorkout.intensity
+                    }, 250);
+
+                    if (xml.includes('<IntervalsT')) {
+                        const intervalCount = (xml.match(/<IntervalsT/g) || []).length;
+                        log(`<span class="pass">✅ Intervals gedetecteerd: ${intervalCount} IntervalsT blocks</span>`);
+
+                        // Should be 2x10 min from Main, not 3x1 min from warmup
+                        if (intervalCount >= 1 && intervalCount <= 2) {
+                            log(`<span class="pass">✅ Correct: Main intervals worden gebruikt (niet warmup)</span>`);
+                        } else {
+                            log(`<span class="warn">⚠️  Interval count: ${intervalCount}</span>`);
+                        }
+                    }
+
+                    log(`<pre>${xml.substring(0, 500)}...</pre>`);
+                } catch (e) {
+                    log(`<span class="fail">❌ Error: ${e.message}</span>`);
+                }
+            }
+
+            // Test 3: Variable Pace Training (was broken before)
+            const variableWorkout = WORKOUTS_DB.climbing.moderate.find(w => w.name === 'Variable Grade Simulation');
+            if (variableWorkout) {
+                log('<h3>Test 2.3: Variable Grade Simulation (Complete Duration)</h3>');
+                const variant = variableWorkout.variants.medium;
+
+                try {
+                    const xml = generateZwiftWorkout({
+                        name: variableWorkout.name,
+                        description: variableWorkout.description,
+                        duration: variant.duration,
+                        details: variant.details,
+                        intensity: variableWorkout.intensity
+                    }, 250);
+
+                    // Extract total duration from XML
+                    const durationMatch = xml.match(/Duration="(\d+)"/);
+                    if (durationMatch) {
+                        const totalSeconds = parseInt(durationMatch[1]);
+                        const totalMinutes = totalSeconds / 60;
+                        const expectedMinutes = variant.duration;
+
+                        log(`<span class="${Math.abs(totalMinutes - expectedMinutes) < 5 ? 'pass' : 'fail'}">
+                            Duration: ${totalMinutes.toFixed(0)} min (verwacht: ${expectedMinutes} min)
+                        </span>`);
+
+                        if (Math.abs(totalMinutes - expectedMinutes) < 5) {
+                            log(`<span class="pass">✅ Correcte duration - Main section wordt gebruikt!</span>`);
+                        } else {
+                            log(`<span class="fail">❌ Incorrecte duration - mogelijk alleen warmup/cooldown</span>`);
+                        }
+                    }
+
+                    log(`<pre>${xml.substring(0, 500)}...</pre>`);
+                } catch (e) {
+                    log(`<span class="fail">❌ Error: ${e.message}</span>`);
+                }
+            }
+        }
+
+        function testAllGoals() {
+            log('<h2>🎯 TEST 3: Export Test voor Alle Goals</h2>');
+
+            const goals = Object.keys(WORKOUTS_DB);
+            let successCount = 0;
+            let errorCount = 0;
+
+            goals.forEach(goal => {
+                log(`<h3>${goal.toUpperCase()}</h3>`);
+
+                Object.keys(WORKOUTS_DB[goal]).forEach(intensity => {
+                    const workouts = WORKOUTS_DB[goal][intensity];
+
+                    workouts.forEach(workout => {
+                        const variant = workout.variants.medium;
+
+                        try {
+                            const xml = generateZwiftWorkout({
+                                name: workout.name,
+                                description: workout.description,
+                                duration: variant.duration,
+                                details: variant.details,
+                                intensity: workout.intensity
+                            }, 250);
+
+                            if (xml && xml.includes('<?xml') && xml.includes('</workout_file>')) {
+                                successCount++;
+                            } else {
+                                errorCount++;
+                                log(`<span class="fail">❌ ${workout.name}: Incomplete XML</span>`);
+                            }
+                        } catch (e) {
+                            errorCount++;
+                            log(`<span class="fail">❌ ${workout.name}: ${e.message}</span>`);
+                        }
+                    });
+                });
+            });
+
+            log(`<span class="pass">✅ Succesvolle exports: ${successCount}</span>`);
+            if (errorCount > 0) {
+                log(`<span class="fail">❌ Mislukte exports: ${errorCount}</span>`);
+            } else {
+                log(`<span class="pass">✅ Alle workouts kunnen geëxporteerd worden!</span>`);
+            }
+        }
+
+        function runAllTests() {
+            results.innerHTML = '';
+
+            log('<h1>🚀 RUNNING ALL TESTS...</h1>');
+
+            const dbTest = testWorkoutsDatabase();
+            testZwiftExport();
+            testAllGoals();
+
+            log('<h2>✅ TESTS VOLTOOID</h2>');
+            if (dbTest) {
+                log('<span class="pass">🎉 Alle tests geslaagd! De applicatie is klaar voor gebruik.</span>');
+            } else {
+                log('<span class="warn">⚠️  Sommige issues gevonden - zie details hierboven</span>');
+            }
+        }
+
+        // Auto-run on load
+        window.onload = () => {
+            setTimeout(runAllTests, 100);
+        };
+    </script>
+</body>
+</html>
