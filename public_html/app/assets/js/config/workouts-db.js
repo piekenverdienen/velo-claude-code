@@ -670,5 +670,247 @@ const WORKOUTS_DB = {
                 }
             }
         ]
+    },
+
+    // ========================================
+    // GRAN FONDO - Endurance focused training
+    // ========================================
+    granfondo: {
+        easy: [
+            {
+                name: "Base Miles",
+                description: "Long steady endurance. Build your aerobic engine.",
+                intensity: "60-70% FTP",
+                tips: "This is about time in the saddle. Stay comfortable and conversational.",
+                variants: {
+                    short: {
+                        duration: 90,
+                        displayName: "Base Miles (Quick)",
+                        details: "Warm-up: 15 min easy. Main: 70 min steady @ 60-70% FTP. Cool-down: 5 min."
+                    },
+                    medium: {
+                        duration: 120,
+                        displayName: "Base Miles",
+                        details: "Warm-up: 15 min easy. Main: 100 min steady @ 60-70% FTP. Cool-down: 5 min."
+                    },
+                    long: {
+                        duration: 180,
+                        displayName: "Base Miles (Extended)",
+                        details: "Warm-up: 15 min easy. Main: 160 min steady @ 60-70% FTP. Practice nutrition strategy. Cool-down: 5 min."
+                    }
+                }
+            },
+            {
+                name: "Endurance Foundation",
+                description: "Zone 2 all-day pace. Perfect for building base fitness.",
+                intensity: "65-75% FTP",
+                tips: "You should be able to hold a conversation. If you can't, slow down.",
+                variants: {
+                    short: {
+                        duration: 75,
+                        displayName: "Endurance Foundation (Quick)",
+                        details: "Warm-up: 10 min. Main: 60 min Zone 2 @ 65-75% FTP. Cool-down: 5 min."
+                    },
+                    medium: {
+                        duration: 120,
+                        displayName: "Endurance Foundation",
+                        details: "Warm-up: 15 min. Main: 100 min Zone 2 @ 65-75% FTP. Cool-down: 5 min."
+                    },
+                    long: {
+                        duration: 180,
+                        displayName: "Endurance Foundation (Extended)",
+                        details: "Warm-up: 15 min. Main: 160 min Zone 2 @ 65-75% FTP. Simulate event conditions. Cool-down: 5 min."
+                    }
+                }
+            },
+            {
+                name: "Recovery Spin",
+                description: "Active recovery for between hard blocks.",
+                intensity: "50-60% FTP",
+                tips: "Super easy. High cadence, low resistance. This helps you recover.",
+                variants: {
+                    short: {
+                        duration: 45,
+                        displayName: "Recovery Spin (Quick)",
+                        details: "Just spin easy for 45 min. 90+ rpm. No efforts."
+                    },
+                    medium: {
+                        duration: 60,
+                        displayName: "Recovery Spin",
+                        details: "Easy 60 min spin. High cadence, minimal resistance. Active recovery."
+                    },
+                    long: {
+                        duration: 90,
+                        displayName: "Recovery Spin (Extended)",
+                        details: "Long recovery ride. 90 min @ 50-60% FTP. Stay relaxed."
+                    }
+                }
+            }
+        ],
+        moderate: [
+            {
+                name: "Tempo Endurance",
+                description: "Sustained tempo blocks. Gran fondo race pace.",
+                intensity: "75-85% FTP",
+                tips: "This is your gran fondo pace. Practice nutrition and pacing.",
+                variants: {
+                    short: {
+                        duration: 75,
+                        displayName: "Tempo Endurance (Quick)",
+                        details: "Warm-up: 15 min. Main: 2x20 min @ 75-85% FTP, 5 min easy. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 100,
+                        displayName: "Tempo Endurance",
+                        details: "Warm-up: 15 min. Main: 3x20 min @ 75-85% FTP, 5 min easy. Cool-down: 10 min."
+                    },
+                    long: {
+                        duration: 135,
+                        displayName: "Tempo Endurance (Extended)",
+                        details: "Warm-up: 15 min. Main: 4x20 min @ 75-85% FTP, 5 min easy. Cool-down: 15 min."
+                    }
+                }
+            },
+            {
+                name: "Sweet Spot Endurance",
+                description: "Long sweet spot intervals for sustained power.",
+                intensity: "88-92% FTP",
+                tips: "This builds your ability to hold power for hours. Mental toughness workout.",
+                variants: {
+                    short: {
+                        duration: 70,
+                        displayName: "Sweet Spot Endurance (Quick)",
+                        details: "Warm-up: 15 min. Main: 2x15 min @ 88-92% FTP, 5 min easy. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 95,
+                        displayName: "Sweet Spot Endurance",
+                        details: "Warm-up: 15 min. Main: 3x15 min @ 88-92% FTP, 5 min easy. Cool-down: 10 min."
+                    },
+                    long: {
+                        duration: 130,
+                        displayName: "Sweet Spot Endurance (Extended)",
+                        details: "Warm-up: 15 min. Main: 4x15 min @ 88-92% FTP, 5 min easy. Cool-down: 15 min."
+                    }
+                }
+            },
+            {
+                name: "Fondo Simulation",
+                description: "Varied pace simulating gran fondo terrain.",
+                intensity: "Variable 70-90% FTP",
+                tips: "Practice surging for hills, then settling back to tempo. Real-world pacing.",
+                variants: {
+                    short: {
+                        duration: 90,
+                        displayName: "Fondo Simulation (Quick)",
+                        details: "Warm-up: 15 min. Main: Alternating 5 min @ 85% FTP, 10 min @ 70% FTP. Repeat 4x. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 120,
+                        displayName: "Fondo Simulation",
+                        details: "Warm-up: 15 min. Main: Alternating 5 min @ 90% FTP, 10 min @ 70% FTP. Repeat 5x. Cool-down: 10 min."
+                    },
+                    long: {
+                        duration: 150,
+                        displayName: "Fondo Simulation (Extended)",
+                        details: "Warm-up: 15 min. Main: Alternating 5 min @ 90% FTP, 15 min @ 70% FTP. Repeat 6x. Cool-down: 15 min."
+                    }
+                }
+            }
+        ],
+        hard: [
+            {
+                name: "Threshold Endurance",
+                description: "Long threshold efforts for race-winning power.",
+                intensity: "95-100% FTP",
+                tips: "This hurts. But this is what separates good from great in gran fondos.",
+                variants: {
+                    short: {
+                        duration: 65,
+                        displayName: "Threshold Endurance (Quick)",
+                        details: "Warm-up: 15 min with 2x2 min builds. Main: 2x12 min @ 95-100% FTP, 6 min recovery. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 85,
+                        displayName: "Threshold Endurance",
+                        details: "Warm-up: 15 min with 3x2 min builds. Main: 3x12 min @ 95-100% FTP, 6 min recovery. Cool-down: 10 min."
+                    },
+                    long: {
+                        duration: 110,
+                        displayName: "Threshold Endurance (Extended)",
+                        details: "Warm-up: 15 min with 3x2 min builds. Main: 4x12 min @ 95-100% FTP, 7 min recovery. Cool-down: 15 min."
+                    }
+                }
+            },
+            {
+                name: "Climb Repeats",
+                description: "Simulated climb efforts for hilly gran fondos.",
+                intensity: "90-100% FTP",
+                tips: "Imagine you're climbing. Stay seated, grind it out. This builds climbing endurance.",
+                variants: {
+                    short: {
+                        duration: 60,
+                        displayName: "Climb Repeats (Quick)",
+                        details: "Warm-up: 15 min. Main: 3x8 min @ 90-100% FTP (seated), 5 min recovery. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 80,
+                        displayName: "Climb Repeats",
+                        details: "Warm-up: 15 min. Main: 4x8 min @ 90-100% FTP (seated), 5 min recovery. Cool-down: 15 min."
+                    },
+                    long: {
+                        duration: 100,
+                        displayName: "Climb Repeats (Extended)",
+                        details: "Warm-up: 15 min. Main: 5x10 min @ 90-100% FTP (seated), 5 min recovery. Cool-down: 15 min."
+                    }
+                }
+            },
+            {
+                name: "VO2 Max Builders",
+                description: "Short VO2 efforts to build top-end for attacks.",
+                intensity: "110-120% FTP",
+                tips: "These are short and brutal. They give you the power to respond to attacks.",
+                variants: {
+                    short: {
+                        duration: 50,
+                        displayName: "VO2 Max Builders (Quick)",
+                        details: "Warm-up: 15 min with builds. Main: 4x4 min @ 110-120% FTP, 4 min recovery. Cool-down: 10 min."
+                    },
+                    medium: {
+                        duration: 65,
+                        displayName: "VO2 Max Builders",
+                        details: "Warm-up: 15 min with builds. Main: 5x4 min @ 110-120% FTP, 4 min recovery. Cool-down: 10 min."
+                    },
+                    long: {
+                        duration: 85,
+                        displayName: "VO2 Max Builders (Extended)",
+                        details: "Warm-up: 15 min with builds. Main: 6x5 min @ 110-120% FTP, 4 min recovery. Cool-down: 10 min."
+                    }
+                }
+            },
+            {
+                name: "Gran Fondo Race Day",
+                description: "Full event simulation with varied efforts.",
+                intensity: "Variable 55-110% FTP",
+                tips: "Treat this like race day. Test everything. No surprises on event day.",
+                variants: {
+                    short: {
+                        duration: 120,
+                        displayName: "Gran Fondo Race Day (Quick)",
+                        details: "Full 2-hour simulation. Include surges, climbs, tempo blocks. Practice race nutrition."
+                    },
+                    medium: {
+                        duration: 180,
+                        displayName: "Gran Fondo Race Day",
+                        details: "Full 3-hour race simulation. Varied efforts, climbs, descents. Full race nutrition strategy."
+                    },
+                    long: {
+                        duration: 240,
+                        displayName: "Gran Fondo Race Day (Extended)",
+                        details: "Extended 4-hour simulation. Everything: climbs, flats, attacks, tempo work. Full race day dress rehearsal."
+                    }
+                }
+            }
+        ]
     }
 };
