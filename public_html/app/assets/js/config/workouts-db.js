@@ -35,17 +35,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 30,
                         displayName: "Active Recovery (Quick)",
-                        details: "Just spin easy for 30 min. No efforts. This is recovery, not training."
+                        details: "Warm-up: 5 min easy. Main: 20 min @ 55% FTP, high cadence 90+ rpm. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 50,
                         displayName: "Active Recovery",
-                        details: "Easy spin for 50 min. High cadence, minimal resistance throughout."
+                        details: "Warm-up: 5 min easy. Main: 40 min @ 55% FTP, high cadence 90+ rpm. Cool-down: 5 min."
                     },
                     long: {
                         duration: 75,
                         displayName: "Active Recovery (Extended)",
-                        details: "Long, easy spin. 75 min of pure recovery. Focus on smooth pedaling."
+                        details: "Warm-up: 10 min easy. Main: 60 min @ 55% FTP, high cadence 90+ rpm. Cool-down: 5 min."
                     }
                 }
             },
@@ -200,17 +200,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 55,
                         displayName: "Polarized Power Test (Quick)",
-                        details: "Warm-up: 15 min progressive. Test: 2x6 min @ 100% FTP, 8 min recovery. Cool-down: 10 min."
+                        details: "Warm-up: 15 min progressive builds. Main: 2x10 min @ 100% FTP, 10 min recovery. Cool-down: 10 min."
                     },
                     medium: {
                         duration: 70,
                         displayName: "Polarized Power Test",
-                        details: "Warm-up: 20 min progressive. Test: 2x8 min @ 100% FTP, 10 min recovery. Cool-down: easy spin."
+                        details: "Warm-up: 20 min progressive builds. Main: 2x12 min @ 100% FTP, 16 min recovery. Cool-down: 10 min."
                     },
                     long: {
                         duration: 85,
                         displayName: "Polarized Power Test (Extended)",
-                        details: "Warm-up: 20 min progressive. Test: 2x12 min @ 100% FTP, 10 min recovery. Cool-down: 15 min."
+                        details: "Warm-up: 20 min progressive builds. Main: 2x15 min @ 100% FTP, 20 min recovery. Cool-down: 15 min."
                     }
                 }
             },
@@ -251,17 +251,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 45,
                         displayName: "Zone 1 Climb Sim (Quick)",
-                        details: "Increase resistance for 70-75 rpm cadence. Stay seated. 45 min total."
+                        details: "Warm-up: 10 min easy. Main: 30 min @ 65-70% FTP, 70-75 rpm, seated. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 75,
                         displayName: "Zone 1 Climb Sim",
-                        details: "Increase resistance for 70-75 rpm cadence. Stay seated. Focus on form."
+                        details: "Warm-up: 10 min easy. Main: 60 min @ 65-70% FTP, 70-75 rpm, seated. Cool-down: 5 min."
                     },
                     long: {
                         duration: 105,
                         displayName: "Zone 1 Climb Sim (Extended)",
-                        details: "Extended climb simulation. 70-75 rpm. Stay seated entire time. Work on sustainability."
+                        details: "Warm-up: 15 min easy. Main: 85 min @ 65-70% FTP, 70-75 rpm, seated. Cool-down: 5 min."
                     }
                 }
             },
@@ -297,17 +297,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 55,
                         displayName: "Seated Climbing Endurance (Quick)",
-                        details: "Maintain 65-70 rpm. Focus on smooth pedal stroke and core stability. 55 min."
+                        details: "Warm-up: 10 min. Main: 40 min @ 68-72% FTP, 65-70 rpm, seated. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 85,
                         displayName: "Seated Climbing Endurance",
-                        details: "Extended seated work. 65-70 rpm. Perfect your climbing form."
+                        details: "Warm-up: 10 min. Main: 70 min @ 68-72% FTP, 65-70 rpm, seated. Cool-down: 5 min."
                     },
                     long: {
                         duration: 115,
                         displayName: "Seated Climbing Endurance (Extended)",
-                        details: "Long seated climb. 65-70 rpm throughout. Build climbing-specific endurance."
+                        details: "Warm-up: 15 min. Main: 95 min @ 68-72% FTP, 65-70 rpm, seated. Cool-down: 5 min."
                     }
                 }
             }
