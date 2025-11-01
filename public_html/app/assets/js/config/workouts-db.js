@@ -274,17 +274,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 40,
                         displayName: "Cadence Climb Drills (Quick)",
-                        details: "Alternate 4 min @ 60 rpm and 4 min @ 90 rpm. Same power throughout."
+                        details: "Warm-up: 5 min. Main: 30 min alternating 4 min @ 60 rpm, 4 min @ 90 rpm @ 65% FTP. Cool-down: 5 min."
                     },
                     medium: {
                         duration: 65,
                         displayName: "Cadence Climb Drills",
-                        details: "Alternate 5 min @ 60 rpm and 5 min @ 90 rpm. Same power. Focus on efficiency."
+                        details: "Warm-up: 10 min. Main: 50 min alternating 5 min @ 60 rpm, 5 min @ 90 rpm @ 65% FTP. Cool-down: 5 min."
                     },
                     long: {
                         duration: 90,
                         displayName: "Cadence Climb Drills (Extended)",
-                        details: "Extended cadence work. 6 min blocks @ 60 rpm and 90 rpm. Maintain power."
+                        details: "Warm-up: 10 min. Main: 75 min alternating 6 min @ 60 rpm, 6 min @ 90 rpm @ 65% FTP. Cool-down: 5 min."
                     }
                 }
             },
@@ -416,17 +416,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 60,
                         displayName: "HC Climb Simulation (Quick)",
-                        details: "After warm-up: 35 min climbing with 2 min @ 95% FTP every 8 min (steep sections). Cool-down: 10 min."
+                        details: "Warm-up: 15 min. Main: 35 min climbing @ 75% FTP with 4x2 min surges @ 95% FTP. Cool-down: 10 min."
                     },
                     medium: {
                         duration: 80,
                         displayName: "HC Climb Simulation",
-                        details: "After warm-up: 50 min climbing with 2 min @ 95% FTP every 10 min (steep sections). Cool-down: 15 min."
+                        details: "Warm-up: 15 min. Main: 50 min climbing @ 75% FTP with 5x2 min surges @ 95% FTP. Cool-down: 15 min."
                     },
                     long: {
                         duration: 105,
                         displayName: "HC Climb Simulation (Extended)",
-                        details: "After warm-up: 70 min climbing with 2 min @ 95% FTP every 10 min (steep sections). Cool-down: 15 min."
+                        details: "Warm-up: 20 min. Main: 70 min climbing @ 75% FTP with 7x2 min surges @ 95% FTP. Cool-down: 15 min."
                     }
                 }
             },
@@ -561,17 +561,17 @@ const WORKOUTS_DB = {
                     short: {
                         duration: 65,
                         displayName: "Variable Pace Training (Quick)",
-                        details: "After warm-up: Alternate 8 min @ 65% with 4 min @ 85% FTP. Repeat. Cool-down: 15 min."
+                        details: "Warm-up: 10 min. Main: 40 min variable pace (alternate 8 min easy @ 65%, 4 min tempo @ 85% FTP). Cool-down: 15 min."
                     },
                     medium: {
                         duration: 100,
                         displayName: "Variable Pace Training",
-                        details: "After warm-up: Alternate 10 min @ 65% with 5 min @ 85% FTP. Repeat throughout ride. Cool-down: 15 min."
+                        details: "Warm-up: 15 min. Main: 70 min variable pace (alternate 10 min easy @ 65%, 5 min tempo @ 85% FTP). Cool-down: 15 min."
                     },
                     long: {
                         duration: 135,
                         displayName: "Variable Pace Training (Extended)",
-                        details: "Extended variable pace. 10 min @ 65%, 5 min @ 85% FTP. Learn to recover on the bike. Cool-down: 15 min."
+                        details: "Warm-up: 15 min. Main: 105 min variable pace (alternate 10 min easy @ 65%, 5 min tempo @ 85% FTP). Cool-down: 15 min."
                     }
                 }
             },
