@@ -9,6 +9,7 @@
 public_html/app/
 ├── intake.html                                    ← GEWIJZIGD
 └── assets/js/
+    ├── app.js                                     ← GEWIJZIGD (KRITIEK!)
     ├── config/
     │   └── workouts-db.js                         ← GEWIJZIGD (KRITIEK!)
     └── modules/
@@ -16,9 +17,15 @@ public_html/app/
 ```
 
 **Waarom kritiek:**
+- `app.js`: Intake loading fix - zonder deze fix laadt de intake form niet!
 - `workouts-db.js`: 42 workout variants gefixt, duplicate verwijderd
 - `intake.html`: Goals gefixt (3 goals: ftp, granfondo, climbing)
 - `zwift-export.js`: Parser gefixt voor pyramid patterns en Main section extraction
+
+**⚠️ ZONDER app.js FIX:**
+- Intake form laadt niet (blijft leeg/header only)
+- Race condition tussen modules
+- UIModule niet beschikbaar bij init
 
 **⚠️ ZONDER zwift-export.js FIX:**
 - Pyramid workouts genereren lege .zwo files
@@ -70,13 +77,14 @@ Root directory:
 public_html/
 └── app/
     ├── intake.html                    ← UPDATE DIT
-    ├── index.html                     
+    ├── index.html
     ├── assets/
     │   ├── js/
+    │   │   ├── app.js                 ← UPDATE DIT (KRITIEK!)
     │   │   ├── config/
     │   │   │   └── workouts-db.js     ← UPDATE DIT (KRITIEK!)
     │   │   └── modules/
-    │   │       ├── zwift-export.js    
+    │   │       ├── zwift-export.js    ← UPDATE DIT (KRITIEK!)
     │   │       ├── workout.js
     │   │       ├── schedule.js
     │   │       └── ui.js
@@ -93,16 +101,18 @@ public_html/
 ```bash
 # Maak backup van huidige versie
 cp public_html/app/intake.html public_html/app/intake.html.backup
+cp public_html/app/assets/js/app.js public_html/app/assets/js/app.js.backup
 cp public_html/app/assets/js/config/workouts-db.js public_html/app/assets/js/config/workouts-db.js.backup
 cp public_html/app/assets/js/modules/zwift-export.js public_html/app/assets/js/modules/zwift-export.js.backup
 ```
 
-### **Stap 2: Update de 3 kritieke bestanden**
+### **Stap 2: Update de 4 kritieke bestanden**
 ```bash
-# Upload deze 3 bestanden naar productie:
+# Upload deze 4 bestanden naar productie:
 public_html/app/intake.html
 public_html/app/assets/js/config/workouts-db.js
 public_html/app/assets/js/modules/zwift-export.js  ← KRITIEK VOOR ZWIFT EXPORT!
+public_html/app/assets/js/app.js                   ← KRITIEK VOOR INTAKE LOADING!
 ```
 
 ### **Stap 3: Verificatie (optioneel)**
@@ -161,37 +171,42 @@ https://jouw-domein.nl/app/test-zwift-export.html
 
 **Als je alleen de core functionaliteit wilt:**
 
-### Update deze 3 bestanden:
+### Update deze 4 bestanden:
 1. `public_html/app/intake.html`
-2. `public_html/app/assets/js/config/workouts-db.js`
-3. `public_html/app/assets/js/modules/zwift-export.js` ← **KRITIEK!**
+2. `public_html/app/assets/js/app.js` ← **KRITIEK!**
+3. `public_html/app/assets/js/config/workouts-db.js`
+4. `public_html/app/assets/js/modules/zwift-export.js` ← **KRITIEK!**
 
-**⚠️ Zonder zwift-export.js werken de Zwift exports NIET correct!**
+**⚠️ ZONDER deze bestanden:**
+- **app.js**: Intake form laadt niet (blijft leeg/header only)
+- **zwift-export.js**: Zwift exports werken NIET correct!
 
 ---
 
 ## 💡 AANBEVELING
 
 ### **Voor Productie:**
-✅ Update de 3 essentiële bestanden (intake.html + workouts-db.js + zwift-export.js)
+✅ Update de 4 essentiële bestanden (intake.html + app.js + workouts-db.js + zwift-export.js)
 ⚠️ Test tools zijn optioneel (handig voor debugging)
 ❌ Documentatie bestanden (FINAL_REVIEW.md, etc.) niet nodig
 
 ### **Deployment grootte:**
-- **Minimaal:** 3 bestanden (~89KB totaal)
+- **Minimaal:** 4 bestanden (~140KB totaal)
   - intake.html: 41 KB
+  - app.js: 51 KB
   - workouts-db.js: 34 KB
   - zwift-export.js: 14 KB
 - **Met test tools:** 2 extra bestanden (~39KB)
-- **Totaal:** < 130KB
+- **Totaal:** < 180KB
 
 ---
 
 ## 🔥 SNEL COMMANDO VOOR PRODUCTIE
 
 ```bash
-# Kopieer de 3 essentiële bestanden naar productie:
+# Kopieer de 4 essentiële bestanden naar productie:
 scp public_html/app/intake.html user@server:/pad/naar/productie/app/
+scp public_html/app/assets/js/app.js user@server:/pad/naar/productie/app/assets/js/
 scp public_html/app/assets/js/config/workouts-db.js user@server:/pad/naar/productie/app/assets/js/config/
 scp public_html/app/assets/js/modules/zwift-export.js user@server:/pad/naar/productie/app/assets/js/modules/
 ```
@@ -206,7 +221,7 @@ rsync -av public_html/app/ user@server:/pad/naar/productie/app/ \
 Of via Git (als je de branch hebt):
 ```bash
 git pull origin claude/incomplete-description-011CUdqk1uCyqPtDHPGnbbrR
-# Dan kopieer de 3 bestanden naar productie
+# Dan kopieer de 4 bestanden naar productie
 ```
 
 ---
