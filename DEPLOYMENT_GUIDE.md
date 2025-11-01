@@ -8,13 +8,22 @@
 ```
 public_html/app/
 ├── intake.html                                    ← GEWIJZIGD
-└── assets/js/config/
-    └── workouts-db.js                             ← GEWIJZIGD (KRITIEK!)
+└── assets/js/
+    ├── config/
+    │   └── workouts-db.js                         ← GEWIJZIGD (KRITIEK!)
+    └── modules/
+        └── zwift-export.js                        ← GEWIJZIGD (KRITIEK!)
 ```
 
 **Waarom kritiek:**
 - `workouts-db.js`: 42 workout variants gefixt, duplicate verwijderd
 - `intake.html`: Goals gefixt (3 goals: ftp, granfondo, climbing)
+- `zwift-export.js`: Parser gefixt voor pyramid patterns en Main section extraction
+
+**⚠️ ZONDER zwift-export.js FIX:**
+- Pyramid workouts genereren lege .zwo files
+- Warmup intervals overschrijven Main intervals
+- Variable Pace Training genereert alleen 25 min (ipv 65 min)
 
 ---
 
@@ -24,7 +33,9 @@ public_html/app/
 ├── assets/
 │   ├── js/
 │   │   └── modules/
-│   │       └── zwift-export.js                    ← Onveranderd (maar essentieel)
+│   │       ├── workout.js                         ← Onveranderd
+│   │       ├── schedule.js                        ← Onveranderd
+│   │       └── ui.js                              ← Onveranderd
 │   └── css/                                       ← Onveranderd
 └── index.html                                     ← Onveranderd
 ```
@@ -83,13 +94,15 @@ public_html/
 # Maak backup van huidige versie
 cp public_html/app/intake.html public_html/app/intake.html.backup
 cp public_html/app/assets/js/config/workouts-db.js public_html/app/assets/js/config/workouts-db.js.backup
+cp public_html/app/assets/js/modules/zwift-export.js public_html/app/assets/js/modules/zwift-export.js.backup
 ```
 
-### **Stap 2: Update de 2 kritieke bestanden**
+### **Stap 2: Update de 3 kritieke bestanden**
 ```bash
-# Upload deze 2 bestanden naar productie:
+# Upload deze 3 bestanden naar productie:
 public_html/app/intake.html
 public_html/app/assets/js/config/workouts-db.js
+public_html/app/assets/js/modules/zwift-export.js  ← KRITIEK VOOR ZWIFT EXPORT!
 ```
 
 ### **Stap 3: Verificatie (optioneel)**
@@ -148,34 +161,39 @@ https://jouw-domein.nl/app/test-zwift-export.html
 
 **Als je alleen de core functionaliteit wilt:**
 
-### Update deze 2 bestanden:
+### Update deze 3 bestanden:
 1. `public_html/app/intake.html`
 2. `public_html/app/assets/js/config/workouts-db.js`
+3. `public_html/app/assets/js/modules/zwift-export.js` ← **KRITIEK!**
 
-**Dat is alles! De rest werkt al.**
+**⚠️ Zonder zwift-export.js werken de Zwift exports NIET correct!**
 
 ---
 
 ## 💡 AANBEVELING
 
 ### **Voor Productie:**
-✅ Update de 2 essentiële bestanden (intake.html + workouts-db.js)  
-⚠️ Test tools zijn optioneel (handig voor debugging)  
+✅ Update de 3 essentiële bestanden (intake.html + workouts-db.js + zwift-export.js)
+⚠️ Test tools zijn optioneel (handig voor debugging)
 ❌ Documentatie bestanden (FINAL_REVIEW.md, etc.) niet nodig
 
 ### **Deployment grootte:**
-- **Minimaal:** 2 bestanden (~200KB totaal)
-- **Met test tools:** 4 extra bestanden (~100KB)
-- **Totaal:** < 300KB
+- **Minimaal:** 3 bestanden (~89KB totaal)
+  - intake.html: 41 KB
+  - workouts-db.js: 34 KB
+  - zwift-export.js: 14 KB
+- **Met test tools:** 2 extra bestanden (~39KB)
+- **Totaal:** < 130KB
 
 ---
 
 ## 🔥 SNEL COMMANDO VOOR PRODUCTIE
 
 ```bash
-# Kopieer alleen de 2 essentiële bestanden naar productie:
+# Kopieer de 3 essentiële bestanden naar productie:
 scp public_html/app/intake.html user@server:/pad/naar/productie/app/
 scp public_html/app/assets/js/config/workouts-db.js user@server:/pad/naar/productie/app/assets/js/config/
+scp public_html/app/assets/js/modules/zwift-export.js user@server:/pad/naar/productie/app/assets/js/modules/
 ```
 
 Of via FTP/Git:
@@ -185,6 +203,15 @@ rsync -av public_html/app/ user@server:/pad/naar/productie/app/ \
   --exclude='test-*.html'
 ```
 
+Of via Git (als je de branch hebt):
+```bash
+git pull origin claude/incomplete-description-011CUdqk1uCyqPtDHPGnbbrR
+# Dan kopieer de 3 bestanden naar productie
+```
+
 ---
 
-**Klaar! Na update zijn alle 87 workout variants correct en volledig functioneel.**
+**Klaar! Na update zijn:**
+- ✅ Alle 87 workout variants correct en volledig functioneel
+- ✅ Zwift export werkt voor alle workouts (pyramid patterns, Main sections, intervals)
+- ✅ 3 goals (FTP, Gran Fondo, Climbing) compleet
